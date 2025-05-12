@@ -1,8 +1,8 @@
 [phases.setup]
-nixpkgs = ["python311", "gcc", "pkg-config", "libffi", "openssl", "postgresql"]
+nixpkgs = ["python311", "pip", "gcc", "pkg-config", "openssl", "libffi"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["python3 -m pip install --upgrade pip", "pip install -r requirements.txt"]
 
 [start]
 cmd = "python app.py"
