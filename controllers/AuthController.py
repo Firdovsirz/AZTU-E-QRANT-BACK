@@ -23,7 +23,7 @@ def signup():
         data = request.get_json()
         logger.info("Signup request data: %s", data)
 
-        required_fields = ['fin_kod', 'password', "role"]
+        required_fields = ['fin_kod', 'password', 'user_type', 'academic_type', 'project_role']
 
         for field in required_fields:
             if field not in data:
@@ -32,14 +32,21 @@ def signup():
 
         fin_kod = data.get('fin_kod')
         password = data.get('password')
-        role = data.get('role')
+        user_type = data.get('user_type')
+        academic_type = data.get('academic_type')
+        project_role = data.get('project_role')
 
         logger.info("Checking if user already exists: fin_kod=%s", fin_kod)
         if Auth.query.filter_by(fin_kod=fin_kod).first() or User.query.filter_by(fin_kod=fin_kod).first():
             logger.warning("User already exists with fin_kod: %s", fin_kod)
             return handle_conflict(409)
 
-        auth_record = Auth(fin_kod=fin_kod)
+        auth_record = Auth(
+            fin_kod=fin_kod,
+            user_type=user_type,
+            academic_role=academic_type,
+            project_role=project_role
+        )
         auth_record.set_password(password)
 
         user_record = User(
@@ -62,16 +69,45 @@ def signup():
 @auth_bp.route('/auth/signin', methods=['POST'])
 @cross_origin(origins=["http://localhost:5173"], supports_credentials=True)
 def signin():
-    data = request.get_json()
-    fin_kod = data.get('fin_kod')
-    password = data.get('password')
+    try:
+        data = request.get_json()
+        fin_kod = data.get('fin_kod')
+        password = data.get('password')
+        user_type = data.get('user_type')
+        academic_type = data.get('academic_type')
 
-    auth_data = Auth.query.filter_by(fin_kod=fin_kod).first()
-    user_data = User.query.filter_by(fin_kod=fin_kod).first()
+        if not all([fin_kod, password, user_type is not None, academic_type is not None]):
+            logger.warning("Missing required fields in request")
+            return handle_missing_field(404)
 
-    if not auth_data or not auth_data.check_password(password):
-        return handle_unauthorized(401, "Invalid credentials.")
-    
-    token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed)
+        logger.info("Attempting signin for FIN: %s", fin_kod)
 
-    return handle_signin_success(fin_kod, "Signed in successfully.", token)
+        auth_data = Auth.query.filter_by(fin_kod=fin_kod).first()
+        if auth_data is None:
+            logger.warning("No auth record found for FIN: %s", fin_kod)
+            return handle_unauthorized(401, "Invalid FIN code or user not found.")
+
+        if not auth_data.check_password(password):
+            logger.warning("Invalid password for FIN: %s", fin_kod)
+            return handle_unauthorized(401, "Incorrect password.")
+
+        if str(auth_data.user_type) != str(user_type):
+            logger.warning("User type mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.user_type, user_type)
+            return handle_unauthorized(401, "User type does not match.")
+
+        if str(auth_data.academic_role) != str(academic_type):
+            logger.warning("Academic role mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.academic_role, academic_type)
+            return handle_unauthorized(401, "Academic role does not match.")
+
+        user_data = User.query.filter_by(fin_kod=fin_kod).first()
+        if user_data is None:
+            logger.warning("No user record found for FIN: %s", fin_kod)
+            return handle_unauthorized(401, "User data not found.")
+
+        token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed)
+        logger.info("User signed in successfully: %s", fin_kod)
+        return handle_signin_success(fin_kod, "Signed in successfully.", token)
+
+    except Exception as e:
+        logger.exception("Unexpected error during signin")
+        return {"error": "Internal server error", "message": str(e)}, 500 

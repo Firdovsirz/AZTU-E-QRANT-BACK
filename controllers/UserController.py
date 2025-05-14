@@ -1,4 +1,9 @@
+import base64
+import logging
+from io import BytesIO
 from extentions.db import db
+from datetime import datetime
+from models.userModel import User
 from flask_cors import cross_origin
 from flask import Blueprint, request
 from utils.jwt_util import encode_auth_token
@@ -10,11 +15,6 @@ from exceptions.exception import handle_missing_field
 from exceptions.exception import handle_signin_success
 from exceptions.exception import handle_success
 from exceptions.exception import handle_global_exception
-import logging
-from datetime import datetime
-from models.userModel import User
-from io import BytesIO
-import base64
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,13 +58,11 @@ def complete_profile():
             'work_location', 'work_phone', 'work_email'
         ]
 
-        # Check for required fields in the form data (excluding the file)
         for field in required_fields:
             if not data.get(field):
                 logger.warning(f"Missing required field: {field}")
                 return handle_missing_field(404)
 
-        # Handling the file upload for 'image'
         print("Checking for image_file...")
         image_file = request.files.get('image')
 
@@ -73,7 +71,7 @@ def complete_profile():
         else:
             logger.warning("Missing image file in request")
             print("missing_field")
-            return handle_missing_field(404)  # If the image is missing, return an error
+            return handle_missing_field(404)
 
         fin_kod = data['fin_kod']
         logger.info(f"Looking up user by FIN: {fin_kod}")
@@ -84,11 +82,10 @@ def complete_profile():
             print("No user found with FIN:", fin_kod)
             return handle_not_found(404)
 
-        # Update user details
         user.name = data.get('name')
         user.surname = data.get('surname')
         user.father_name = data.get('father_name')
-        user.image = image_bytes  # Save the byte array in the image field
+        user.image = image_bytes
         user.born_place = data.get('born_place')
         user.living_location = data.get('living_location')
         user.home_phone = data.get('home_phone')

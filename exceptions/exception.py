@@ -50,9 +50,13 @@ def handle_role_forbidden(e, message):
 
 # handle unauthorized
 
-@app.errorhandler(401)
-def handle_unauthorized(e, message):
-    return jsonify({"status": 401, "message" : message, "error_code": "UNAUTHORIZED"})
+def handle_unauthorized(status_code=401, message="Unauthorized"):
+    response = jsonify({
+        "error": "Unauthorized",
+        "message": message
+    })
+    response.status_code = status_code
+    return response
 
 # OK - 2xx
 
