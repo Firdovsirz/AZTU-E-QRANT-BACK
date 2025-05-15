@@ -5,7 +5,14 @@ from extentions.db import db
 from config.config import Config
 from controllers.AuthController import auth_bp
 from controllers.UserController import user_bp
+from controllers.rentController import rent_bp
+from controllers.smetaCotroller import smeta_bp
+from controllers.salaryController import salary_bp
+from controllers.subjectController import subject_bp
 from controllers.ProjectController import project_offer
+from controllers.other_expensesController import other_exp
+from controllers.servicesTableController import services_bp
+from controllers.CollaboratorController import collaborator_bp
 
 def main_app():
     app = Flask(__name__)
@@ -26,7 +33,14 @@ def main_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
+    app.register_blueprint(rent_bp)
+    app.register_blueprint(smeta_bp)
+    app.register_blueprint(salary_bp)
+    app.register_blueprint(other_exp)
+    app.register_blueprint(subject_bp)
+    app.register_blueprint(services_bp)
     app.register_blueprint(project_offer)
+    app.register_blueprint(collaborator_bp)
 
     return app
 

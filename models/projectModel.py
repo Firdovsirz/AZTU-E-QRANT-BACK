@@ -17,6 +17,7 @@ class Project(db.Model):
     project_assessment = db.Column(db.Text)
     project_requirements = db.Column(db.Text)
     project_deadline = db.Column(db.DateTime)
+    approved = db.Column(db.Integer, default=0)
 
     def project_detail(self):
         return {
@@ -33,5 +34,6 @@ class Project(db.Model):
             'project_monitoring': self.project_monitoring,
             'project_assessment': self.project_assessment,
             'project_requirements': self.project_requirements,
-            'project_deadline': self.project_deadline
+            'project_deadline': self.project_deadline,
+            'approved': self.approved
         }

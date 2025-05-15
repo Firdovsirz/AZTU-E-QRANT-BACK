@@ -63,6 +63,7 @@ class User(db.Model):
             "work_email": self.work_email,
             "profile_completed": self.profile_completed
         }
+    
     def get_user_image(self):
         return {
             "image": base64.b64encode(bytes(self.image)).decode('utf-8') if self.image else None

@@ -12,7 +12,6 @@ from exceptions.exception import handle_signin_success
 
 auth_bp = Blueprint('auth', __name__)
 import logging
-from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
