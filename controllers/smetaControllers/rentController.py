@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.rentModel import db, Rent
+from models.smetaModels.rentModel import db, Rent
 
 rent_bp = Blueprint('rent_bp', __name__)
 
@@ -23,19 +23,18 @@ def create_rent():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-
-@rent_bp.route('/api/get-rent-all-tables', methods=['GET'])
-def get_all_rents():
-    rents = Rent.query.all()
+@rent_bp.route('/api/get-rent-all-tables/<int:project_code>', methods=['GET'])
+def get_all_rents(project_code):
+    rents = Rent.query.filter_by(project_code=project_code).all()
     return jsonify([r.rent() for r in rents]), 200
 
 
 
 
-@rent_bp.route('/api/edit-rent-table/<int:id>', methods=['PATCH'])
-def update_rent(id):
+@rent_bp.route('/api/edit-rent-table/<int:project_code>', methods=['PATCH'])
+def update_rent(project_code):
     data = request.get_json()
-    rent = Rent.query.get(id)
+    rent = Rent.query.get(project_code)
 
     if not rent:
         return jsonify({'message': 'Rent record not found'}), 404
@@ -64,7 +63,8 @@ def update_rent(id):
 
 @rent_bp.route('/api/delete-rent-table/<int:project_code>', methods=['DELETE'])
 def delete_rent(project_code):
-    rent = Rent.query.get(project_code)
+    rent = Rent.query.filter_by(project_code=project_code).first()
+
     if not rent:
         return jsonify({'message': 'Rent record not found'}), 404
 
@@ -74,3 +74,4 @@ def delete_rent(project_code):
         return jsonify({'message': 'Rent record deleted'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+

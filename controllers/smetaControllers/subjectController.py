@@ -1,6 +1,7 @@
+from models.projectModel import Project
 from flask import Blueprint, request, jsonify
-from models.subjectModel import db, SubjectOfPurchase
-from models.projectModel import Project  
+from models.smetaModels.subjectModel import db, SubjectOfPurchase
+from exceptions.exception import handle_success, handle_global_exception
 
 subject_bp = Blueprint('subject_bp', __name__)
 
@@ -18,7 +19,6 @@ def add_subject():
 
         new_subject = SubjectOfPurchase(
             project_code=data['project_code'],
-            fin_code=data['fin_code'],
             equipment_name=data['equipment_name'],
             unit_of_measure=data['unit_of_measure'],
             price=data['price'],
@@ -34,44 +34,54 @@ def add_subject():
         return jsonify({'error': str(e)}), 400
 
 
-@subject_bp.route('/api/get-subjects', methods=['GET'])
-def get_subjects():
-    try:
+# @subject_bp.route('/api/get-subjects', methods=['GET'])
+# def get_subjects():
+#     try:
         
-        results = db.session.query(SubjectOfPurchase).join(
-            Project,
-            (SubjectOfPurchase.project_code == Project.project_code) &
-            (SubjectOfPurchase.fin_code == Project.fin_kod)
-        ).all()
+#         results = db.session.query(SubjectOfPurchase).join(
+#             Project,
+#             (SubjectOfPurchase.project_code == Project.project_code) &
+#             (SubjectOfPurchase.fin_code == Project.fin_kod)
+#         ).all()
 
-        response = [{
-            'project_code': s.project_code,
-            'fin_code': s.fin_code,
-            'equipment_name': s.equipment_name,
-            'unit_of_measure': s.unit_of_measure,
-            'price': s.price,
-            'quantity': s.quantity,
-            'total_amount': s.total_amount
-        } for s in results]
+#         response = [{
+#             'project_code': s.project_code,
+#             'fin_code': s.fin_code,
+#             'equipment_name': s.equipment_name,
+#             'unit_of_measure': s.unit_of_measure,
+#             'price': s.price,
+#             'quantity': s.quantity,
+#             'total_amount': s.total_amount
+#         } for s in results]
 
-        return jsonify(response), 200
+#         return jsonify(response), 200
 
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 400
+
+
+@subject_bp.route("/api/subject/smeta/<int:project_code>", methods=['GET'])
+def get_subject_smeta_by_project_code(project_code):
+    try:
+        subject_smeta = SubjectOfPurchase.query.filter_by(project_code=project_code).all()
+
+        return handle_success([subject.subject_details() for subject in subject_smeta], "Smeta fetched successfully.")
+    
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-
+        return handle_global_exception(str(e))
+    
 @subject_bp.route('/api/update-subject/<int:project_code>', methods=['PATCH'])
 def update_subject(project_code):
     data = request.get_json()
 
     try:
-        subject = SubjectOfPurchase.query.get(project_code)
+        subject = SubjectOfPurchase.query.filter_by(project_code=project_code).first()
 
         if not subject:
-            return jsonify({'error': 'Subject not found with the provided ID'}), 404
+            return jsonify({'error': 'Subject not found with the provided project_code'}), 404
 
-        if 'services_name' in data:
-            subject.equipment_name = data['services_name']
+        if 'equipment_name' in data:
+            subject.equipment_name = data['equipment_name']
         if 'unit_of_measure' in data:
             subject.unit_of_measure = data['unit_of_measure']
         if 'price' in data:
@@ -89,13 +99,14 @@ def update_subject(project_code):
         return jsonify({'error': str(e)}), 400
 
 
+
 @subject_bp.route('/api/delete-subject/<int:project_code>', methods=['DELETE'])
 def delete_subject(project_code):
     try:
-        subject = SubjectOfPurchase.query.get(project_code)
+        subject = SubjectOfPurchase.query.filter_by(project_code=project_code).first()
 
         if not subject:
-            return jsonify({'error': 'Subject not found with the provided ID'}), 404
+            return jsonify({'error': 'Subject not found with the provided project_code'}), 404
 
         db.session.delete(subject)
         db.session.commit()
@@ -104,5 +115,4 @@ def delete_subject(project_code):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-
 

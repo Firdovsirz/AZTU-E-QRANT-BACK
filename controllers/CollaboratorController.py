@@ -36,17 +36,42 @@ def get_collaborators_by_fin_kod(project_code):
 
         for collaborator in collborators:
             user = User.query.filter_by(fin_kod=collaborator.fin_kod).first()
+            user_role = Auth.query.filter_by(fin_kod=collaborator.fin_kod).first().project_role
+
             if user:
                 collaborator_list.append({
                     'fin_kod': collaborator.fin_kod,
                     'project_code': collaborator.project_code,
                     'name': user.name,
                     'surname': user.surname,
-                    'image': user.get_user_image()
+                    'image': user.get_user_image(),
+                    'project_role': user_role
                 })
 
         return {'data': collaborator_list, 'status': 200}, 200
     
+    except Exception as e:
+        return handle_global_exception(str(e))
+    
+@collaborator_bp.route("/api/project/owner/<int:project_code>", methods=['GET'])
+def get_project_owner(project_code):
+    try:
+
+        owner_fin_kod = Project.query.filter_by(project_code=project_code).first().fin_kod
+
+        user = User.query.filter_by(fin_kod=owner_fin_kod).first()
+
+        if not user:
+            return handle_specific_not_found("Owner not found.")
+        
+        owner_details = {
+            'name': user.name,
+            'surname': user.surname,
+            'father_name': user.father_name,
+        }
+
+        return handle_success(owner_details, 'Owner fetched successfully.')
+
     except Exception as e:
         return handle_global_exception(str(e))
 

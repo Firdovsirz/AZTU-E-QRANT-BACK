@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.other_expensesModel import db, other_exp
+from models.smetaModels.other_expensesModel import db, other_exp_model
 
 other_exp = Blueprint('other_exp', __name__)
 
@@ -8,7 +8,7 @@ other_exp = Blueprint('other_exp', __name__)
 def create_other_exp():
     data = request.get_json()
     try:
-        new_other_exp = other_exp(
+        new_other_exp = other_exp_model(
             project_code=data['project_code'],
             expenses_name=data['expenses_name'],
             unit_of_measure=data['unit_of_measure'],
@@ -19,15 +19,15 @@ def create_other_exp():
         )
         db.session.add(new_other_exp)
         db.session.commit()
-        return jsonify({'message': 'other_exp record created', 'data': new_other_exp.other_exp()}), 201
+        return jsonify({'message': 'other_exp record created', 'data': new_other_exp.rent()}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
 
-@other_exp.route('/api/get-other_exp-all-tables', methods=['GET'])
-def get_all_other_exps():
-    other_exps = other_exp.query.all()
-    return jsonify([r.other_exp() for r in other_exps]), 200
+@other_exp.route('/api/get-other_exp-all-tables/<int:project_code>', methods=['GET'])
+def get_all_other_exps(project_code):
+    other_exps = other_exp_model.query.filter_by(project_code=project_code).all()
+    return jsonify([r.rent() for r in other_exps]), 200
 
 
 

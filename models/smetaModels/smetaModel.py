@@ -1,18 +1,16 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from extentions.db import db
 
 class Smeta(db.Model):
     __tablename__ = 'smeta'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     project_code = db.Column(db.Integer, nullable=False)
-    total_salary = db.Column(db.Integer, db.ForeignKey('salary_table.total_amount'))
+    total_salary = db.Column(db.Integer)
     total_fee = db.Column(db.Integer, nullable=False)
     defense_fund = db.Column(db.Integer, nullable=False)
-    total_equipment = db.Column(db.Integer, db.ForeignKey('subject_of_purchase.total_amount'))
-    total_services = db.Column(db.Integer, db.ForeignKey('services.total_amount'))
-    total_rent = db.Column(db.Integer, db.ForeignKey('rent_table.total_amount'))
+    total_equipment = db.Column(db.Integer)
+    total_services = db.Column(db.Integer)
+    total_rent = db.Column(db.Integer)
     other_expenses = db.Column(db.Integer)  # Foreign key reference unclear, omitted
 
     def serialize(self):

@@ -1,15 +1,11 @@
-from flask_sqlalchemy import SQLAlchemy
+from extentions.db import db
 
-db = SQLAlchemy()
-
-class SubjectOfPurchase(db.Model):
-    __tablename__ = 'subject_of_purchase'
-
+class ServicesOfPurchase(db.Model):
+    __tablename__ = 'services'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_code = db.Column(db.Integer, db.ForeignKey('project.project_code'), primary_key=True)
-    fin_code = db.Column(db.Text, db.ForeignKey('project.fin_kod'), primary_key=True)
-    equipment_name = db.Column(db.Text, nullable=False)
+    project_code = db.Column(db.Integer, primary_key=True)
+    services_name = db.Column(db.Text, nullable=False)
     unit_of_measure = db.Column(db.Text, nullable=False)
     price = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
@@ -19,8 +15,7 @@ class SubjectOfPurchase(db.Model):
         return {
             'id': self.id,
             'project_code': self.project_code,
-            'fin_code': self.fin_code,
-            'equipment_name': self.equipment_name,
+            'services_name': self.services_name,
             'unit_of_measure': self.unit_of_measure,
             'price': self.price,
             'quantity': self.quantity,

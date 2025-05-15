@@ -2,17 +2,17 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from extentions.db import db
-from config.config import Config
+from config.config import Config 
 from controllers.AuthController import auth_bp
 from controllers.UserController import user_bp
-from controllers.rentController import rent_bp
-from controllers.smetaCotroller import smeta_bp
-from controllers.salaryController import salary_bp
-from controllers.subjectController import subject_bp
 from controllers.ProjectController import project_offer
-from controllers.other_expensesController import other_exp
-from controllers.servicesTableController import services_bp
 from controllers.CollaboratorController import collaborator_bp
+from controllers.smetaControllers.rentController import rent_bp
+from controllers.smetaControllers.smetaCotroller import smeta_bp
+from controllers.smetaControllers.salaryController import salary_bp
+from controllers.smetaControllers.subjectController import subject_bp
+from controllers.smetaControllers.other_expensesController import other_exp
+from controllers.smetaControllers.servicesTableController import services_bp
 
 def main_app():
     app = Flask(__name__)
@@ -47,4 +47,4 @@ def main_app():
 if __name__ == '__main__':
     app = main_app()
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)

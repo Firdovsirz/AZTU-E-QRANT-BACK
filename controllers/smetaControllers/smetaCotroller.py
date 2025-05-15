@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.smetaModel import db, Smeta
+from models.smetaModels.smetaModel import db, Smeta
 
 smeta_bp = Blueprint('smeta_bp', __name__)
 
@@ -29,10 +29,10 @@ def create_smeta():
 def get_all_smeta():
     smetas = Smeta.query.all()
     return jsonify([s.serialize() for s in smetas]), 200
+ 
 
 
-
-@smeta_bp.route('/api/edit-smeta/<int:project_code>', methods=['PATCH'])
+@smeta_bp.route('/apiedit-smeta/<int:project_code>', methods=['PATCH'])
 def update_smeta(project_code):
     data = request.get_json()
     smeta = Smeta.query.get(project_code)

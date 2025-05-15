@@ -1,14 +1,13 @@
-from flask_sqlalchemy import SQLAlchemy
+from extentions.db import db
 
-db = SQLAlchemy()
 
-class other_exp(db.Model):
-    __tablename__ = 'other_expenses'
+class Rent(db.Model):
+    __tablename__ = 'rent_table'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     project_code = db.Column(db.Integer, nullable=False)
-    expenses_name = db.Column(db.String, nullable=False)
-    unit_of_measure = db.Column(db.String, nullable=False)
+    rent_area = db.Column(db.Text, nullable=False)
+    unit_of_measure = db.Column(db.TEXT, nullable=False)
     unit_price = db.Column(db.Integer, nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     duration = db.Column(db.Integer, nullable=False)
@@ -18,7 +17,7 @@ class other_exp(db.Model):
         return {
             'id': self.id,
             'project_code': self.project_code,
-            'expenses_name': self.expenses_name,
+            'rent_area': self.rent_area,
             'unit_of_measure': self.unit_of_measure,
             'unit_price': self.unit_price,
             'quantity': self.quantity,

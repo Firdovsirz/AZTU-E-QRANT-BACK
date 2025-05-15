@@ -1,24 +1,27 @@
 from flask import Blueprint, request, jsonify
+import logging
 from models.projectModel import Project  
-from models.servicesTableModel import db, ServicesOfPurchase
+from models.smetaModels.servicesTableModel import db, ServicesOfPurchase
+
+logging.basicConfig(level=logging.DEBUG)
 
 services_bp = Blueprint('services_bp', __name__)
 
 @services_bp.route('/api/add-services', methods=['POST'])
 def add_subject():
     data = request.get_json()
+    logging.debug(f"Received data: {data}")
     try:
         matching_project = Project.query.filter_by(
-            project_code=data['project_code'],
-            fin_kod=data['fin_code']
+            project_code=data['project_code']
         ).first()
 
         if not matching_project:
+            logging.debug("No matching project found.")
             return jsonify({'error': 'No matching project found with given project_code and fin_code'}), 400
 
         new_subject = ServicesOfPurchase(
             project_code=data['project_code'],
-            fin_code=data['fin_code'],
             services_name=data['services_name'],
             unit_of_measure=data['unit_of_measure'],
             price=data['price'],
@@ -27,26 +30,22 @@ def add_subject():
         )
         db.session.add(new_subject)
         db.session.commit()
+        logging.debug("New subject added successfully.")
         return jsonify({'message': 'Subject added successfully'}), 201
 
     except Exception as e:
         db.session.rollback()
+        logging.exception("Exception occurred while adding subject:")
         return jsonify({'error': str(e)}), 400
 
 
-@services_bp.route('/api/get-services', methods=['GET'])
-def get_subjects():
+@services_bp.route('/api/get-services/<int:project_code>', methods=['GET'])
+def get_subjects(project_code):
     try:
-        
-        results = db.session.query(ServicesOfPurchase).join(
-            Project,
-            (ServicesOfPurchase.project_code == Project.project_code) &
-            (ServicesOfPurchase.fin_code == Project.fin_kod)
-        ).all()
+        results = ServicesOfPurchase.query.filter_by(project_code=project_code).all()
 
         response = [{
             'project_code': s.project_code,
-            'fin_code': s.fin_code,
             'services_name': s.services_name,
             'unit_of_measure': s.unit_of_measure,
             'price': s.price,
@@ -63,44 +62,54 @@ def get_subjects():
 
 @services_bp.route('/api/update-services/<int:project_code>', methods=['PATCH'])
 def update_subject(project_code):
-    data = request.get_json()
-
     try:
-        subject = ServicesOfPurchase.query.get(project_code)
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'Invalid or missing JSON data'}), 400
 
-        if not subject:
-            return jsonify({'error': 'Subject not found with the provided ID'}), 404
+        services = ServicesOfPurchase.query.get(project_code)
+
+        if not services:
+            return jsonify({'error': 'Service not found with the provided ID'}), 404
+
+        # Update only if the fields exist
         if 'services_name' in data:
-            subject.services_name = data['services_name']
+            services.services_name = data['services_name']
         if 'unit_of_measure' in data:
-            subject.unit_of_measure = data['unit_of_measure']
+            services.unit_of_measure = data['unit_of_measure']
         if 'price' in data:
-            subject.price = data['price']
+            services.price = data['price']
         if 'quantity' in data:
-            subject.quantity = data['quantity']
-        if 'price' in data or 'quantity' in data:
+            services.quantity = data['quantity']
 
-            subject.total_amount = subject.price * subject.quantity
+        # Recalculate total_amount only if both values are available and valid
+        if services.price is not None and services.quantity is not None:
+            try:
+                services.total_amount = float(services.price) * float(services.quantity)
+            except Exception as e:
+                return jsonify({'error': f"Calculation error: {str(e)}"}), 400
 
         db.session.commit()
-        return jsonify({'message': 'Subject updated successfully'}), 200
+        return jsonify({'message': 'Service updated successfully'}), 200
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': f"Server error: {str(e)}"}), 500
+
+
     
 
 @services_bp.route('/api/delete-services/<int:project_code>', methods=['DELETE'])
 def delete_subject(project_code):
+    services = ServicesOfPurchase.query.filter_by(project_code=project_code).first()
+
+    if not services:
+        return jsonify({'message': 'services not found'}), 404
+
     try:
-        subject = ServicesOfPurchase.query.get(project_code) 
-
-        if not subject:
-            return jsonify({'error': 'Subject not found with the provided ID'}), 404
-
-        db.session.delete(subject)
+        db.session.delete(services)
         db.session.commit()
-        return jsonify({'message': 'Subject deleted successfully'}), 200
+        return jsonify({'message': 'services deleted successfully'}), 200
 
     except Exception as e:
         db.session.rollback()
