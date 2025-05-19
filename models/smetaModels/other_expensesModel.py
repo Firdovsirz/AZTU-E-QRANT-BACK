@@ -12,7 +12,7 @@ class other_exp_model(db.Model):
     duration = db.Column(db.Integer, nullable=False)
     total_amount = db.Column(db.Integer, nullable=False)
 
-    def rent(self):
+    def others(self):
         return {
             'id': self.id,
             'project_code': self.project_code,

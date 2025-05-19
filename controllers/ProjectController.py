@@ -6,8 +6,15 @@ from models.userModel import User
 from flask_cors import cross_origin
 from models.projectModel import Project
 from utils.decarator import role_required
-from flask import Blueprint, request, current_app
+from flask import Blueprint, jsonify, request, current_app
 from exceptions.exception import handle_missing_field, handle_conflict, handle_creation, handle_specific_not_found, handle_success, handle_global_exception
+from models.collaboratorModel import Collaborator
+from models.smetaModels.other_expensesModel import other_exp_model
+from models.smetaModels.rentModel import Rent
+from models.smetaModels.salaryModel import Salary
+from models.smetaModels.servicesTableModel import ServicesOfPurchase
+from models.smetaModels.subjectModel import SubjectOfPurchase
+from models.smetaModels.smetaModel import Smeta
 
 project_offer = Blueprint('project_offer', __name__)
 
@@ -187,39 +194,21 @@ def get_project_by_fin_kod(fin_kod):
         return handle_success(project.project_detail(), 'Project fetched successfully')
     except Exception as e:
         return handle_global_exception(str(e))
+    
+@project_offer.route("/api/project/<int:project_code>", methods=['GET'])
+def project_by_project_code(project_code):
 
-# @project_offer.route('/api/projects/approved', methods=['GET'])
-# @cross_origin()
-# def get_approved_projects():
-#     projects = Project.query.filter_by(approved=1).all()
-#     return {'approved_projects': [serialize_project(p) for p in projects]}, 200
+    try:
+        
+        project = Project.query.filter_by(project_code=project_code).first()
 
-
-# @project_offer.route('/api/projects/pending', methods=['GET'])
-# @cross_origin()
-# def get_pending_projects():
-#     projects = Project.query.filter_by(approved=0).all()
-#     return {'pending_projects': [serialize_project(p) for p in projects]}, 200
-
-# def serialize_project(project):
-#     return {
-#         'project_code': project.project_code,
-#         'fin_kod': project.fin_kod,
-#         'project_name': project.project_name,
-#         'project_purpose': project.project_purpose,
-#         'project_annotation': project.project_annotation,
-#         'project_key_words': project.project_key_words,
-#         'project_scientific_idea': project.project_scientific_idea,
-#         'project_structure': project.project_structure,
-#         'team_characterization': project.team_characterization,
-#         'project_monitoring': project.project_monitoring,
-#         'project_requirements': project.project_requirements,
-#         'project_assessment': project.project_assessment,
-#         'project_deadline': project.project_deadline.strftime('%Y-%m-%d') if project.project_deadline else None,
-#         'approved': project.approved
-#     }
-
-
+        if not project:
+            return handle_specific_not_found("Project not found.")
+        
+        return handle_success(project.project_detail(), "Project data fetched succesfully.")
+    
+    except Exception as e:
+        return handle_global_exception(str(e))
 
 @project_offer.route('/api/upd/project', methods=['PATCH'])
 @cross_origin()
@@ -260,7 +249,6 @@ def update_project_offer():
 
 @project_offer.route('/api/delete/project', methods=['DELETE'])
 @cross_origin()
-#@role_required([1])
 def delete_project_offer():
     data = request.get_json()
     fin_kod = data.get('fin_kod')
@@ -281,3 +269,60 @@ def delete_project_offer():
     db.session.commit()
 
     return {'message': 'Project successfully deleted.'}, 200
+
+@project_offer.route("/api/project-details/<int:project_code>", methods=['GET'])
+def get_project_details_by_project_code(project_code):
+
+    try:
+        
+        project = Project.query.filter_by(project_code=project_code).first()
+
+        if not project:
+            return handle_specific_not_found("Project not found for the project code.")
+        
+        project_owner_fin_kod = project.fin_kod
+
+        project_owner = User.query.filter_by(fin_kod=project_owner_fin_kod).first()
+
+        collaborator_list = []
+
+        collaborators = Collaborator.query.filter_by(project_code=project_code).all()
+
+        for collaborator in collaborators:
+
+            collaborator_details = User.query.filter_by(fin_kod=collaborator.fin_kod).first()
+
+            collaborator_data = {
+                "name": collaborator_details.name,
+                "surname": collaborator_details.surname,
+                "father_name": collaborator_details.father_name,
+                "fin_kod": collaborator_details.fin_kod,
+                "image": collaborator_details.get_user_image()
+            }
+
+            collaborator_list.append(collaborator_data)
+
+        project_smeta_salary_list = []
+
+        preoject_smeta_salaries = Salary.query.filter_by(project_code=project_code).all()
+
+        for salary_smeta in preoject_smeta_salaries:
+
+            project_smeta_salary_list.append(salary_smeta.salary_details())
+        
+        project_data = {
+            "project_owner": {
+                "name": project_owner.name,
+                "surname": project_owner.surname,
+                "father_name": project_owner.father_name,
+                "fin_kod": project_owner_fin_kod
+            },
+            "collaborators": collaborator_list,
+            "project_details": project.project_detail(),
+            "project_saalry_smeta": project_smeta_salary_list
+        }
+        
+        return handle_success(project_data, "Project data fetched successfully")
+    
+    except Exception as e:
+        return handle_global_exception(str(e))

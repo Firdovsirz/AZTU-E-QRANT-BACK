@@ -23,7 +23,7 @@ def main_app():
         origins=["http://localhost:5173"],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Content-Disposition"],
-        methods=["GET", "POST", "OPTIONS"]
+        methods=["GET", "POST", "OPTIONS", "DELETE"]
     )
 
     db.init_app(app)

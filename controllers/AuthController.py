@@ -2,10 +2,12 @@ from models.authModel import Auth
 from flask_cors import cross_origin
 from flask import Blueprint, request
 from models.userModel import db, User
+from models.projectModel import  Project
 from utils.jwt_util import encode_auth_token
 from exceptions.exception import handle_creation
 from exceptions.exception import handle_conflict
 from exceptions.exception import handle_not_found
+from models.collaboratorModel import  Collaborator
 from exceptions.exception import handle_unauthorized
 from exceptions.exception import handle_missing_field
 from exceptions.exception import handle_signin_success
@@ -99,14 +101,32 @@ def signin():
             return handle_unauthorized(401, "Academic role does not match.")
 
         user_data = User.query.filter_by(fin_kod=fin_kod).first()
+        profile_completed = user_data.profile_completed
         if user_data is None:
             logger.warning("No user record found for FIN: %s", fin_kod)
             return handle_unauthorized(401, "User data not found.")
+        
+        project_role = auth_data.project_role
+        
+        if project_role == 0:
+            project_owner = Project.query.filter_by(fin_kod=fin_kod).first()
+            project_code = project_owner.project_code if project_owner else None
+
+        
+        if project_role == 1:
+            collaborator = Collaborator.query.filter_by(fin_kod=fin_kod).first()
+            project_code = collaborator.project_code if collaborator else None
+
+        signin_data = {
+            "auth": auth_data.auth_details(),
+            "project_code": project_code,
+            "profile_completed": profile_completed
+        }
 
         token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed)
         logger.info("User signed in successfully: %s", fin_kod)
-        return handle_signin_success(fin_kod, "Signed in successfully.", token)
+        return handle_signin_success(signin_data, "Signed in successfully.", token)
 
     except Exception as e:
         logger.exception("Unexpected error during signin")
-        return {"error": "Internal server error", "message": str(e)}, 500 
+        return {"error": "Internal server error", "message": str(e)}, 500

@@ -100,10 +100,10 @@ def update_subject(project_code):
 
 
 
-@subject_bp.route('/api/delete-subject/<int:project_code>', methods=['DELETE'])
-def delete_subject(project_code):
+@subject_bp.route('/api/delete/smeta/subject/<int:id>', methods=['DELETE'])
+def delete_subject(id):
     try:
-        subject = SubjectOfPurchase.query.filter_by(project_code=project_code).first()
+        subject = SubjectOfPurchase.query.filter_by(id=id).first()
 
         if not subject:
             return jsonify({'error': 'Subject not found with the provided project_code'}), 404
@@ -115,4 +115,3 @@ def delete_subject(project_code):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-

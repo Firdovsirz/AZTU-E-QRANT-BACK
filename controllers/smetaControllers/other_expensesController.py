@@ -19,7 +19,7 @@ def create_other_exp():
         )
         db.session.add(new_other_exp)
         db.session.commit()
-        return jsonify({'message': 'other_exp record created', 'data': new_other_exp.rent()}), 201
+        return jsonify({'message': 'other_exp record created', 'data': new_other_exp.others()}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -27,7 +27,7 @@ def create_other_exp():
 @other_exp.route('/api/get-other_exp-all-tables/<int:project_code>', methods=['GET'])
 def get_all_other_exps(project_code):
     other_exps = other_exp_model.query.filter_by(project_code=project_code).all()
-    return jsonify([r.rent() for r in other_exps]), 200
+    return jsonify([r.others() for r in other_exps]), 200
 
 
 

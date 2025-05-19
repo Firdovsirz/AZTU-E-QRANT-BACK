@@ -1,7 +1,6 @@
 from extentions.db import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 class Auth(db.Model):
     __tablename__ = 'auth'
     
