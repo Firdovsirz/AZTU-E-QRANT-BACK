@@ -1,6 +1,6 @@
 ## AzTU E-Qrant Back-End
 
-Azərbaycan Texniki Universitetinin E-Qrant layihəsinin Front-End tərəfi.
+Azərbaycan Texniki Universitetinin E-Qrant layihəsinin Back-End tərəfi.
 
 ## 👥 Layihədə iştirak edən şəxslər
 

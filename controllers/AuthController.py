@@ -1,3 +1,4 @@
+import requests
 from models.authModel import Auth
 from flask_cors import cross_origin
 from flask import Blueprint, request
@@ -41,6 +42,20 @@ def signup():
         if Auth.query.filter_by(fin_kod=fin_kod).first() or User.query.filter_by(fin_kod=fin_kod).first():
             logger.warning("User already exists with fin_kod: %s", fin_kod)
             return handle_conflict(409)
+
+        try:
+
+            response = requests.get(f'http://10.2.23.24/telebe-laravel/public/api/get-user/{fin_kod}')
+
+            api_response = response.json()
+            if "error" in api_response:
+                logger.warning("Invalid FIN code according to external API: %s", fin_kod)
+                return handle_unauthorized(401, "FIN code is not valid.")
+            
+        except requests.RequestException as api_error:
+
+            logger.exception("Error while verifying FIN code with external API")
+            return {"error": "Could not verify FIN code", "message": str(api_error)}, 500
 
         auth_record = Auth(
             fin_kod=fin_kod,

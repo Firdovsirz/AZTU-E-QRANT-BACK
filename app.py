@@ -1,8 +1,8 @@
 import os
 from flask import Flask
 from flask_cors import CORS
-from extentions.db import db
 from config.config import Config 
+from extentions.db import migrate, db
 from controllers.AuthController import auth_bp
 from controllers.UserController import user_bp
 from controllers.ProjectController import project_offer
@@ -18,6 +18,7 @@ def main_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+
     CORS(
         app,
         origins=["http://localhost:5173"],
@@ -27,7 +28,8 @@ def main_app():
     )
 
     db.init_app(app)
-
+    migrate.init_app(app, db)
+    
     with app.app_context():
         db.create_all()
 
