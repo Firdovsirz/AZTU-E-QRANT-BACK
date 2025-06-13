@@ -6,6 +6,7 @@ from models.userModel import User
 from flask_cors import cross_origin
 from models.projectModel import Project
 from utils.decarator import role_required
+from utils.jwt_required import token_required
 from flask import Blueprint, jsonify, request, current_app
 from exceptions.exception import handle_missing_field, handle_conflict, handle_creation, handle_specific_not_found, handle_success, handle_global_exception
 from models.collaboratorModel import Collaborator
@@ -26,7 +27,7 @@ def generate_unique_project_code():
 
 
 @project_offer.route('/api/save/project', methods=['POST'])
-@cross_origin()
+@token_required([1])
 def save_project():
     current_app.logger.info("POST /api/save/project called")
     data = request.get_json()
@@ -103,6 +104,7 @@ def serialize_project(project):
     }
 
 @project_offer.route("/api/approve_project", methods=['POST'])
+@token_required([1])
 def approve_project():
     try:
         project_details = request.get_json()
@@ -135,7 +137,7 @@ def approve_project():
         
 
 @project_offer.route('/api/projects', methods=['GET'])
-@cross_origin()
+@token_required([1])
 def get_projects():
     # approved_param = request.args.get('approved')
 
@@ -196,6 +198,7 @@ def get_project_by_fin_kod(fin_kod):
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<int:project_code>", methods=['GET'])
+@token_required([1])
 def project_by_project_code(project_code):
 
     try:
@@ -211,7 +214,7 @@ def project_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @project_offer.route('/api/upd/project', methods=['PATCH'])
-@cross_origin()
+@token_required([1])
 def update_project_offer():
     data = request.get_json()
 
@@ -248,7 +251,7 @@ def update_project_offer():
 
 
 @project_offer.route('/api/delete/project', methods=['DELETE'])
-@cross_origin()
+@token_required([1])
 def delete_project_offer():
     data = request.get_json()
     fin_kod = data.get('fin_kod')
@@ -271,6 +274,7 @@ def delete_project_offer():
     return {'message': 'Project successfully deleted.'}, 200
 
 @project_offer.route("/api/project-details/<int:project_code>", methods=['GET'])
+@token_required([1])
 def get_project_details_by_project_code(project_code):
 
     try:

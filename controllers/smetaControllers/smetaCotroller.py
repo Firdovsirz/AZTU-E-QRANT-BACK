@@ -1,4 +1,5 @@
 from models.projectModel import Project
+from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
 from models.smetaModels.rentModel import Rent
 from models.smetaModels.salaryModel import Salary
@@ -12,6 +13,7 @@ smeta_bp = Blueprint('smeta_bp', __name__)
 
 # ➕ POST - Create new smeta record
 @smeta_bp.route('/api/create-smeta', methods=['POST'])
+@token_required([1])
 def create_smeta():
     data = request.get_json()
     try:
@@ -33,6 +35,7 @@ def create_smeta():
 
 
 @smeta_bp.route("/api/main-smeta/<int:project_code>", methods=['GET'])
+@token_required([1])
 def get_main_smeta_by_project_code(project_code):
 
     try:
@@ -94,6 +97,7 @@ def get_main_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @smeta_bp.route('/api/edit-smeta/<int:project_code>', methods=['PATCH'])
+@token_required([1])
 def update_smeta(project_code):
     data = request.get_json()
     smeta = Smeta.query.get(project_code)
@@ -113,6 +117,7 @@ def update_smeta(project_code):
 
 
 @smeta_bp.route('/api/delete-smeta/<int:project_code>', methods=['DELETE'])
+@token_required([1])
 def delete_smeta(project_code):
     smeta = Smeta.query.get(project_code)
     if not smeta:

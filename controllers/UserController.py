@@ -7,13 +7,14 @@ from models.userModel import User
 from flask_cors import cross_origin
 from flask import Blueprint, request
 from utils.jwt_util import encode_auth_token
+from utils.jwt_required import token_required
+from exceptions.exception import handle_success
 from exceptions.exception import handle_creation
 from exceptions.exception import handle_conflict
 from exceptions.exception import handle_not_found
 from exceptions.exception import handle_unauthorized
 from exceptions.exception import handle_missing_field
 from exceptions.exception import handle_signin_success
-from exceptions.exception import handle_success
 from exceptions.exception import handle_global_exception
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/api/profile/<string:fin_kod>', methods=['GET'])
+@token_required([1])
 def get_profile(fin_kod):
    try:
        user = User.query.filter_by(fin_kod=fin_kod).first()
@@ -32,6 +34,7 @@ def get_profile(fin_kod):
        return handle_global_exception(str(e))
    
 @user_bp.route('/api/profile/image/<string:fin_kod>', methods=['GET'])
+@token_required([1])
 def get_profile_image(fin_kod):
     try:
         user = User.query.filter_by(fin_kod=fin_kod).first()
@@ -42,7 +45,7 @@ def get_profile_image(fin_kod):
         return handle_global_exception(str(e))
     
 @user_bp.route('/api/approve/profile', methods=['POST'])
-@cross_origin(origins=["http://localhost:5173"], supports_credentials=True)
+@token_required([1])
 def complete_profile():
     try:
         data = request.form

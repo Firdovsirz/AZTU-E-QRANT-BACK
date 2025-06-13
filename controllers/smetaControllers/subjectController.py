@@ -1,4 +1,5 @@
 from models.projectModel import Project
+from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
 from models.smetaModels.subjectModel import db, SubjectOfPurchase
 from exceptions.exception import handle_success, handle_global_exception
@@ -6,6 +7,7 @@ from exceptions.exception import handle_success, handle_global_exception
 subject_bp = Blueprint('subject_bp', __name__)
 
 @subject_bp.route('/api/add-subject', methods=['POST'])
+@token_required([1])
 def add_subject():
     data = request.get_json()
     try:
@@ -61,6 +63,7 @@ def add_subject():
 
 
 @subject_bp.route("/api/subject/smeta/<int:project_code>", methods=['GET'])
+@token_required([1])
 def get_subject_smeta_by_project_code(project_code):
     try:
         subject_smeta = SubjectOfPurchase.query.filter_by(project_code=project_code).all()
@@ -71,6 +74,7 @@ def get_subject_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
     
 @subject_bp.route('/api/update-subject/<int:project_code>', methods=['PATCH'])
+@token_required([1])
 def update_subject(project_code):
     data = request.get_json()
 
@@ -101,6 +105,7 @@ def update_subject(project_code):
 
 
 @subject_bp.route('/api/delete/smeta/subject/<int:id>', methods=['DELETE'])
+@token_required([1])
 def delete_subject(id):
     try:
         subject = SubjectOfPurchase.query.filter_by(id=id).first()

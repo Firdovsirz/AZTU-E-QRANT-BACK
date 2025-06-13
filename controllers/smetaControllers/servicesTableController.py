@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
 import logging
 from models.projectModel import Project  
+from utils.jwt_required import token_required
+from flask import Blueprint, request, jsonify
 from models.smetaModels.servicesTableModel import db, ServicesOfPurchase
 
 logging.basicConfig(level=logging.DEBUG)
@@ -8,6 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 services_bp = Blueprint('services_bp', __name__)
 
 @services_bp.route('/api/add-services', methods=['POST'])
+@token_required([1])
 def add_subject():
     data = request.get_json()
     logging.debug(f"Received data: {data}")
@@ -40,6 +42,7 @@ def add_subject():
 
 
 @services_bp.route('/api/get-services/<int:project_code>', methods=['GET'])
+@token_required([1])
 def get_subjects(project_code):
     try:
         results = ServicesOfPurchase.query.filter_by(project_code=project_code).all()
@@ -61,6 +64,7 @@ def get_subjects(project_code):
 
 
 @services_bp.route('/api/update-services/<int:project_code>', methods=['PATCH'])
+@token_required([1])
 def update_subject(project_code):
     try:
         data = request.get_json()
@@ -100,6 +104,7 @@ def update_subject(project_code):
     
 
 @services_bp.route('/api/delete-services/<int:project_code>', methods=['DELETE'])
+@token_required([1])
 def delete_subject(project_code):
     services = ServicesOfPurchase.query.filter_by(project_code=project_code).first()
 
@@ -114,4 +119,3 @@ def delete_subject(project_code):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
-

@@ -6,6 +6,7 @@ from flask_cors import cross_origin
 from flask import Blueprint, request
 from models.projectModel import Project
 from utils.decarator import role_required
+from utils.jwt_required import token_required
 from models.collaboratorModel import Collaborator
 from exceptions.exception import handle_not_found
 from exceptions.exception import handle_global_exception
@@ -18,6 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 collaborator_bp = Blueprint('collaborator_bp', __name__)
 
 @collaborator_bp.route("/api/collaborators", methods=['GET'])
+@token_required([1])
 def get_collaborators():
     try:
         logger.debug("Fetching all collaborators")
@@ -32,6 +34,7 @@ def get_collaborators():
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/collaborators/<int:project_code>")
+@token_required([1])
 def get_collaborators_by_fin_kod(project_code):
     try:
         logger.debug(f"Fetching collaborators for project code: {project_code}")
@@ -63,6 +66,7 @@ def get_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
     
 @collaborator_bp.route("/api/project/owner/<int:project_code>", methods=['GET'])
+@token_required([1])
 def get_project_owner(project_code):
     try:
         logger.debug(f"Fetching project owner for project code: {project_code}")
@@ -88,6 +92,7 @@ def get_project_owner(project_code):
         return handle_global_exception(str(e))
 
 @collaborator_bp.route('/api/be-collaborator', methods=['POST'])
+@token_required([1])
 def be_collaborator():
     try:
         logger.debug("Received request to become collaborator")
