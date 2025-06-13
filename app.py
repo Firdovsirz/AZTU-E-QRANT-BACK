@@ -21,7 +21,7 @@ def main_app():
 
     CORS(
         app,
-        origins=["http://localhost:5173"],
+        origins=["http://10.0.26.35"],
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Content-Disposition"],
         methods=["GET", "POST", "OPTIONS", "DELETE"]
