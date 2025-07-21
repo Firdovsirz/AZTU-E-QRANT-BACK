@@ -20,12 +20,13 @@ def main_app():
 
 
     CORS(
-        app,
-        origins=["http://localhost:5173"],
-        supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization", "Content-Disposition"],
-        methods=["GET", "POST", "OPTIONS", "DELETE"]
-    )
+    	app,
+    	# origins=["http://e-grant.aztu.edu.az", "http://10.0.26.35"],
+    	origins="*",
+    	supports_credentials=True,
+    	allow_headers=["Content-Type", "Authorization", "Content-Disposition"],
+    	methods=["GET", "POST", "OPTIONS", "DELETE"]
+	)
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -48,5 +49,5 @@ def main_app():
 
 if __name__ == '__main__':
     app = main_app()
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)

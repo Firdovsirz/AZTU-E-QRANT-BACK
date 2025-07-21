@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 collaborator_bp = Blueprint('collaborator_bp', __name__)
 
 @collaborator_bp.route("/api/collaborators", methods=['GET'])
-@token_required([1])
+@token_required([0])
 def get_collaborators():
     try:
         logger.debug("Fetching all collaborators")
@@ -34,7 +34,7 @@ def get_collaborators():
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/collaborators/<int:project_code>")
-@token_required([1])
+@token_required([0, 1])
 def get_collaborators_by_fin_kod(project_code):
     try:
         logger.debug(f"Fetching collaborators for project code: {project_code}")
@@ -66,7 +66,7 @@ def get_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
     
 @collaborator_bp.route("/api/project/owner/<int:project_code>", methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def get_project_owner(project_code):
     try:
         logger.debug(f"Fetching project owner for project code: {project_code}")

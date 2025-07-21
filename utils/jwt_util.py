@@ -8,7 +8,7 @@ from flask import current_app, request, jsonify
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-def encode_auth_token(user_id, fin_kod, profile_completed):
+def encode_auth_token(user_id, fin_kod, profile_completed, role):
     try:
         user = User.query.filter_by(fin_kod=fin_kod).first()
         if not user:
@@ -20,6 +20,7 @@ def encode_auth_token(user_id, fin_kod, profile_completed):
             'sub': str(user_id),
             'fin_kod': str(fin_kod),
             'profile_completed': profile_completed,
+        	'role': role,
             'exp': expiration_time
         }
 
@@ -43,7 +44,8 @@ def decode_auth_token(auth_token):
         return {
             'user_id': payload['sub'],
             'fin_kod': payload['fin_kod'],
-            'profile_completed': payload['profile_completed']
+            'profile_completed': payload['profile_completed'],
+        	'role': payload['role']
         }
 
     except jwt.ExpiredSignatureError:

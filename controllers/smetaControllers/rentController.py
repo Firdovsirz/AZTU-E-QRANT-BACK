@@ -6,7 +6,7 @@ rent_bp = Blueprint('rent_bp', __name__)
 
 
 @rent_bp.route('/api/rent', methods=['POST'])
-@token_required([1])
+@token_required([0])
 def create_rent():
     data = request.get_json()
     try:
@@ -26,7 +26,7 @@ def create_rent():
         return jsonify({'error': str(e)}), 400
 
 @rent_bp.route('/api/get-rent-all-tables/<int:project_code>', methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def get_all_rents(project_code):
     rents = Rent.query.filter_by(project_code=project_code).all()
     return jsonify([r.rent() for r in rents]), 200
@@ -35,7 +35,7 @@ def get_all_rents(project_code):
 
 
 @rent_bp.route('/api/edit-rent-table/<int:project_code>', methods=['PATCH'])
-@token_required([1])
+@token_required([0])
 def update_rent(project_code):
     data = request.get_json()
     rent = Rent.query.get(project_code)
@@ -65,10 +65,10 @@ def update_rent(project_code):
         return jsonify({'error': str(e)}), 400
 
 
-@rent_bp.route('/api/delete-rent-table/<int:project_code>', methods=['DELETE'])
-@token_required([1])
-def delete_rent(project_code):
-    rent = Rent.query.filter_by(project_code=project_code).first()
+@rent_bp.route('/api/delete-rent-table/<int:project_code>/<int:id>', methods=['DELETE'])
+@token_required([0])
+def delete_rent(project_code, id):
+    rent = Rent.query.filter_by(project_code=project_code, id=id).first()
 
     if not rent:
         return jsonify({'message': 'Rent record not found'}), 404

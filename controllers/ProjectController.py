@@ -27,7 +27,7 @@ def generate_unique_project_code():
 
 
 @project_offer.route('/api/save/project', methods=['POST'])
-@token_required([1])
+@token_required([0])
 def save_project():
     current_app.logger.info("POST /api/save/project called")
     data = request.get_json()
@@ -104,7 +104,7 @@ def serialize_project(project):
     }
 
 @project_offer.route("/api/approve_project", methods=['POST'])
-@token_required([1])
+@token_required([0])
 def approve_project():
     try:
         project_details = request.get_json()
@@ -137,7 +137,7 @@ def approve_project():
         
 
 @project_offer.route('/api/projects', methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def get_projects():
     # approved_param = request.args.get('approved')
 
@@ -184,6 +184,7 @@ def get_projects():
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<string:fin_kod>")
+@token_required([0 ,1])
 def get_project_by_fin_kod(fin_kod):
     try:
         user = Auth.query.filter_by(fin_kod=fin_kod).first()
@@ -198,7 +199,7 @@ def get_project_by_fin_kod(fin_kod):
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<int:project_code>", methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def project_by_project_code(project_code):
 
     try:
@@ -214,7 +215,7 @@ def project_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @project_offer.route('/api/upd/project', methods=['PATCH'])
-@token_required([1])
+@token_required([0])
 def update_project_offer():
     data = request.get_json()
 
@@ -251,7 +252,7 @@ def update_project_offer():
 
 
 @project_offer.route('/api/delete/project', methods=['DELETE'])
-@token_required([1])
+@token_required([0])
 def delete_project_offer():
     data = request.get_json()
     fin_kod = data.get('fin_kod')
@@ -274,7 +275,7 @@ def delete_project_offer():
     return {'message': 'Project successfully deleted.'}, 200
 
 @project_offer.route("/api/project-details/<int:project_code>", methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def get_project_details_by_project_code(project_code):
 
     try:

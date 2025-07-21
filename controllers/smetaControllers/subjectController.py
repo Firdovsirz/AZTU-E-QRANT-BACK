@@ -3,13 +3,18 @@ from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
 from models.smetaModels.subjectModel import db, SubjectOfPurchase
 from exceptions.exception import handle_success, handle_global_exception
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 subject_bp = Blueprint('subject_bp', __name__)
 
 @subject_bp.route('/api/add-subject', methods=['POST'])
-@token_required([1])
+@token_required([0])
 def add_subject():
     data = request.get_json()
+    logger.debug(f"Received data for add_subject: {data}")
     try:
         matching_project = Project.query.filter_by(
             project_code=data['project_code'],
@@ -17,6 +22,7 @@ def add_subject():
         ).first()
 
         if not matching_project:
+            logger.warning("No matching project found with given project_code and fin_code")
             return jsonify({'error': 'No matching project found with given project_code and fin_code'}), 400
 
         new_subject = SubjectOfPurchase(
@@ -32,6 +38,7 @@ def add_subject():
         return jsonify({'message': 'Subject added successfully'}), 201
 
     except Exception as e:
+        logger.error(f"Error while adding subject: {e}", exc_info=True)
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
 
@@ -63,7 +70,7 @@ def add_subject():
 
 
 @subject_bp.route("/api/subject/smeta/<int:project_code>", methods=['GET'])
-@token_required([1])
+@token_required([0, 1])
 def get_subject_smeta_by_project_code(project_code):
     try:
         subject_smeta = SubjectOfPurchase.query.filter_by(project_code=project_code).all()
@@ -74,7 +81,7 @@ def get_subject_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
     
 @subject_bp.route('/api/update-subject/<int:project_code>', methods=['PATCH'])
-@token_required([1])
+@token_required([0])
 def update_subject(project_code):
     data = request.get_json()
 
@@ -105,7 +112,7 @@ def update_subject(project_code):
 
 
 @subject_bp.route('/api/delete/smeta/subject/<int:id>', methods=['DELETE'])
-@token_required([1])
+@token_required([0])
 def delete_subject(id):
     try:
         subject = SubjectOfPurchase.query.filter_by(id=id).first()

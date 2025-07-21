@@ -83,7 +83,6 @@ def signup():
         return {"error": "Internal server error", "message": str(e)}, 500
 
 @auth_bp.route('/auth/signin', methods=['POST'])
-@cross_origin(origins=["http://localhost:5173"], supports_credentials=True)
 def signin():
     try:
         data = request.get_json()
@@ -138,7 +137,7 @@ def signin():
             "profile_completed": profile_completed
         }
 
-        token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed)
+        token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed, role=auth_data.project_role)
         logger.info("User signed in successfully: %s", fin_kod)
         return handle_signin_success(signin_data, "Signed in successfully.", token)
 
