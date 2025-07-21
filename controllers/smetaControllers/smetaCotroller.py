@@ -1,4 +1,5 @@
 from models.projectModel import Project
+from models.projectModel import Project
 from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
 from models.smetaModels.rentModel import Rent
@@ -7,7 +8,7 @@ from models.smetaModels.smetaModel import db, Smeta
 from models.smetaModels.subjectModel import SubjectOfPurchase
 from models.smetaModels.other_expensesModel import other_exp_model
 from models.smetaModels.servicesTableModel import ServicesOfPurchase
-from exceptions.exception import handle_specific_not_found, handle_global_exception, handle_success
+from exceptions.exception import handle_specific_not_found, handle_global_exception, handle_success, handle_conflict
 
 smeta_bp = Blueprint('smeta_bp', __name__)
 
@@ -83,12 +84,18 @@ def get_main_smeta_by_project_code(project_code):
 
             total_other_amount += i.total_amount
 
+
+        total_main_amount = total_salary_amount + total_tools_amount + total_services_amount + total_rent_amount + total_other_amount
+        if total_main_amount > Project.query.filter_by(project_code=project_code).first().max_smeta_amount:
+            return handle_conflict("Smeta is over ammount")
+        
         main_smeta_data = {
             "total_salary_smeta": total_salary_amount,
             "total_tools_smeta": total_tools_amount,
             "total_services_smeta": total_services_amount,
             "total_rent_smeta": total_rent_amount,
-            "total_other_smeta": total_other_amount
+            "total_other_smeta": total_other_amount,
+            "total_main_amount": total_main_amount
         }
 
         return handle_success(main_smeta_data, "Smeta fetched successfully.")

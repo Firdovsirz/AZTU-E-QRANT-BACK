@@ -7,12 +7,12 @@ class Collaborator(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_code = db.Column(db.Integer, nullable=False)
     fin_kod = db.Column(db.String, unique=True, nullable=False)
+    approved = db.Column(db.Boolean, nullable=False, default=False)
 
-
-    
-    def collaboraator_details(self):
+    def collaborator_details(self):
         return {
             'id': self.id,
             'project_code': self.project_code,
-            'fin_code': self.fin_kod    
+            'fin_code': self.fin_kod,
+            'approved': self.approved
         }

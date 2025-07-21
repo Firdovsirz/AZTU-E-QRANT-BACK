@@ -53,7 +53,7 @@ def save_project():
         'project_name', 'project_purpose', 'project_annotation',
         'project_key_words', 'project_scientific_idea', 'project_structure',
         'team_characterization', 'project_monitoring', 'project_requirements',
-        'project_assessment'
+        'project_assessment', 'collaborator_limit', 'max_smeta_amount'
     ]:
         if field in data:
             setattr(project, field, data[field])
@@ -68,7 +68,7 @@ def save_project():
         'project_name', 'project_purpose', 'project_annotation',
         'project_key_words', 'project_scientific_idea', 'project_structure',
         'team_characterization', 'project_monitoring', 'project_requirements',
-        'project_deadline'
+        'project_deadline', 'collaborator_limit', 'max_smeta_amount'
     ]
 
     all_fields_filled = all(getattr(project, field) for field in required_fields)
@@ -232,7 +232,7 @@ def update_project_offer():
         'project_name', 'project_purpose', 'project_annotation',
         'project_key_words', 'project_scientific_idea', 'project_structure',
         'team_characterization', 'project_monitoring', 'project_requirements',
-        'project_assessment', 'project_deadline'
+        'project_assessment', 'project_deadline', 'collaborator_limit', 'max_smeta_amount'
     ]
 
     for field in updatable_fields:
