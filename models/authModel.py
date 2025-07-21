@@ -10,7 +10,7 @@ class Auth(db.Model):
     user_type = db.Column(db.Integer, nullable=False)
     # 0 = teacher, 1 = phd, 2 = master
     academic_role = db.Column(db.Integer)
-    # 0 = collaborator, 1 = owner
+    # 1 = collaborator, 0 = owner
     project_role = db.Column(db.Integer)
 
 
