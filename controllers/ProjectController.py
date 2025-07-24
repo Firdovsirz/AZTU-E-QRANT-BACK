@@ -46,7 +46,7 @@ def save_project():
         'project_name', 'project_purpose', 'project_annotation',
         'project_key_words', 'project_scientific_idea', 'project_structure',
         'team_characterization', 'project_monitoring', 'project_requirements',
-        'project_assessment', 'collaborator_limit', 'max_smeta_amount'
+        'project_assessment', 'collaborator_limit', 'max_smeta_amount', 'priotet'
     ]:
         if field in data:
             setattr(project, field, data[field])
@@ -61,7 +61,7 @@ def save_project():
         'project_name', 'project_purpose', 'project_annotation',
         'project_key_words', 'project_scientific_idea', 'project_structure',
         'team_characterization', 'project_monitoring', 'project_requirements',
-        'project_deadline', 'collaborator_limit', 'max_smeta_amount'
+        'project_deadline', 'collaborator_limit', 'max_smeta_amount', 'priotet'
     ]
 
     all_fields_filled = all(getattr(project, field) for field in required_fields)
