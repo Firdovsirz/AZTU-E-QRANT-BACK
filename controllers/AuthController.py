@@ -98,12 +98,12 @@ def signin():
         # academic_type = data.get('academic_type')
 
         if not all([
-            fin_kod, 
-            password, 
-            user_type is not None, 
+            fin_kod,
+            password,
+            user_type is not None,
             # academic_type is not None
         ]):
-            logger.warning("Missing required fields in request")
+            logger.warning("Missing required signin fields")
             return handle_missing_field(404)
 
         logger.info("Attempting signin for FIN: %s", fin_kod)
@@ -114,7 +114,7 @@ def signin():
             return handle_unauthorized(401, "Invalid FIN code or user not found.")
 
         if not auth_data.check_password(password):
-            logger.warning("Invalid password for FIN: %s", fin_kod)
+            logger.warning("Incorrect password for FIN: %s", fin_kod)
             return handle_unauthorized(401, "Incorrect password.")
 
         if str(auth_data.user_type) != str(user_type):
@@ -125,32 +125,36 @@ def signin():
         #     logger.warning("Academic role mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.academic_role, academic_type)
         #     return handle_unauthorized(401, "Academic role does not match.")
 
-        user_data = User.query.filter_by(fin_kod=fin_kod).first()
-        profile_completed = user_data.profile_completed
-        if user_data is None:
-            logger.warning("No user record found for FIN: %s", fin_kod)
-            return handle_unauthorized(401, "User data not found.")
-        
-        project_role = auth_data.project_role
+        is_collaborator = False  # Default value
 
+        project_role = auth_data.project_role
         project_code = None
-        
+
         if project_role == 0:
             project_owner = Project.query.filter_by(fin_kod=fin_kod).first()
             project_code = project_owner.project_code if project_owner else None
 
-        
-        if project_role == 1:
+        elif project_role == 1:
             collaborator = Collaborator.query.filter_by(fin_kod=fin_kod).first()
-            project_code = collaborator.project_code if collaborator else None
+            if collaborator:
+                project_code = collaborator.project_code
+                is_collaborator = True
+
+        user_data = User.query.filter_by(fin_kod=fin_kod).first()
+        if user_data is None:
+            logger.warning("No user data found for FIN: %s", fin_kod)
+            return handle_unauthorized(401, "User data not found.")
+        
+        profile_completed = user_data.profile_completed
 
         signin_data = {
             "auth": auth_data.auth_details(),
             "project_code": project_code,
-            "profile_completed": profile_completed
+            "profile_completed": profile_completed,
+            "is_collaborator": is_collaborator
         }
 
-        token = encode_auth_token(auth_data.id, fin_kod, user_data.profile_completed, role=auth_data.project_role)
+        token = encode_auth_token(auth_data.id, fin_kod, profile_completed, role=project_role)
         logger.info("User signed in successfully: %s", fin_kod)
         return handle_signin_success(signin_data, "Signed in successfully.", token)
 
