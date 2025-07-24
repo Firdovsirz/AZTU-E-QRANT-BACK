@@ -25,7 +25,13 @@ def signup():
         data = request.get_json()
         logger.info("Signup request data: %s", data)
 
-        required_fields = ['fin_kod', 'password', 'user_type', 'academic_type', 'project_role']
+        required_fields = [
+            'fin_kod', 
+            'password', 
+            'user_type', 
+            # 'academic_type',
+            'project_role'
+        ]
 
         for field in required_fields:
             if field not in data:
@@ -35,7 +41,7 @@ def signup():
         fin_kod = data.get('fin_kod')
         password = data.get('password')
         user_type = data.get('user_type')
-        academic_type = data.get('academic_type')
+        # academic_type = data.get('academic_type')
         project_role = data.get('project_role')
 
         logger.info("Checking if user already exists: fin_kod=%s", fin_kod)
@@ -43,24 +49,24 @@ def signup():
             logger.warning("User already exists with fin_kod: %s", fin_kod)
             return handle_conflict(409)
 
-        try:
+        # try:
 
-            response = requests.get(f'http://10.2.23.24/telebe-laravel/public/api/get-user/{fin_kod}')
+        #     response = requests.get(f'http://10.2.23.24/telebe-laravel/public/api/get-user/{fin_kod}')
 
-            api_response = response.json()
-            if "error" in api_response:
-                logger.warning("Invalid FIN code according to external API: %s", fin_kod)
-                return handle_unauthorized(401, "FIN code is not valid.")
+        #     api_response = response.json()
+        #     if "error" in api_response:
+        #         logger.warning("Invalid FIN code according to external API: %s", fin_kod)
+        #         return handle_unauthorized(401, "FIN code is not valid.")
             
-        except requests.RequestException as api_error:
+        # except requests.RequestException as api_error:
 
-            logger.exception("Error while verifying FIN code with external API")
-            return {"error": "Could not verify FIN code", "message": str(api_error)}, 500
+        #     logger.exception("Error while verifying FIN code with external API")
+        #     return {"error": "Could not verify FIN code", "message": str(api_error)}, 500
 
         auth_record = Auth(
             fin_kod=fin_kod,
             user_type=user_type,
-            academic_role=academic_type,
+            # academic_role=academic_type,
             project_role=project_role
         )
         auth_record.set_password(password)
@@ -89,9 +95,14 @@ def signin():
         fin_kod = data.get('fin_kod')
         password = data.get('password')
         user_type = data.get('user_type')
-        academic_type = data.get('academic_type')
+        # academic_type = data.get('academic_type')
 
-        if not all([fin_kod, password, user_type is not None, academic_type is not None]):
+        if not all([
+            fin_kod, 
+            password, 
+            user_type is not None, 
+            # academic_type is not None
+        ]):
             logger.warning("Missing required fields in request")
             return handle_missing_field(404)
 
@@ -110,9 +121,9 @@ def signin():
             logger.warning("User type mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.user_type, user_type)
             return handle_unauthorized(401, "User type does not match.")
 
-        if str(auth_data.academic_role) != str(academic_type):
-            logger.warning("Academic role mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.academic_role, academic_type)
-            return handle_unauthorized(401, "Academic role does not match.")
+        # if str(auth_data.academic_role) != str(academic_type):
+        #     logger.warning("Academic role mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.academic_role, academic_type)
+        #     return handle_unauthorized(401, "Academic role does not match.")
 
         user_data = User.query.filter_by(fin_kod=fin_kod).first()
         profile_completed = user_data.profile_completed
@@ -121,6 +132,8 @@ def signin():
             return handle_unauthorized(401, "User data not found.")
         
         project_role = auth_data.project_role
+
+        project_code = None
         
         if project_role == 0:
             project_owner = Project.query.filter_by(fin_kod=fin_kod).first()

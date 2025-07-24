@@ -3,19 +3,12 @@ from extentions.db import db
 from datetime import datetime
 from models.authModel import Auth
 from models.userModel import User
-from flask_cors import cross_origin
 from models.projectModel import Project
-from utils.decarator import role_required
 from utils.jwt_required import token_required
-from flask import Blueprint, jsonify, request, current_app
-from exceptions.exception import handle_missing_field, handle_conflict, handle_creation, handle_specific_not_found, handle_success, handle_global_exception
+from flask import Blueprint, request, current_app
 from models.collaboratorModel import Collaborator
-from models.smetaModels.other_expensesModel import other_exp_model
-from models.smetaModels.rentModel import Rent
 from models.smetaModels.salaryModel import Salary
-from models.smetaModels.servicesTableModel import ServicesOfPurchase
-from models.smetaModels.subjectModel import SubjectOfPurchase
-from models.smetaModels.smetaModel import Smeta
+from exceptions.exception import handle_missing_field, handle_specific_not_found, handle_success, handle_global_exception
 
 project_offer = Blueprint('project_offer', __name__)
 
@@ -27,7 +20,7 @@ def generate_unique_project_code():
 
 
 @project_offer.route('/api/save/project', methods=['POST'])
-@token_required([0])
+@token_required([0, 2])
 def save_project():
     current_app.logger.info("POST /api/save/project called")
     data = request.get_json()
@@ -104,7 +97,7 @@ def serialize_project(project):
     }
 
 @project_offer.route("/api/approve_project", methods=['POST'])
-@token_required([0])
+@token_required([0, 2])
 def approve_project():
     try:
         project_details = request.get_json()
@@ -137,7 +130,7 @@ def approve_project():
         
 
 @project_offer.route('/api/projects', methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_projects():
     # approved_param = request.args.get('approved')
 
@@ -184,7 +177,7 @@ def get_projects():
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<string:fin_kod>")
-@token_required([0 ,1])
+@token_required([0 ,1, 2])
 def get_project_by_fin_kod(fin_kod):
     try:
         user = Auth.query.filter_by(fin_kod=fin_kod).first()
@@ -199,7 +192,7 @@ def get_project_by_fin_kod(fin_kod):
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<int:project_code>", methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def project_by_project_code(project_code):
 
     try:
@@ -215,7 +208,7 @@ def project_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @project_offer.route('/api/upd/project', methods=['PATCH'])
-@token_required([0])
+@token_required([0, 2])
 def update_project_offer():
     data = request.get_json()
 
@@ -252,7 +245,7 @@ def update_project_offer():
 
 
 @project_offer.route('/api/delete/project', methods=['DELETE'])
-@token_required([0])
+@token_required([0, 2])
 def delete_project_offer():
     data = request.get_json()
     fin_kod = data.get('fin_kod')
@@ -275,7 +268,7 @@ def delete_project_offer():
     return {'message': 'Project successfully deleted.'}, 200
 
 @project_offer.route("/api/project-details/<int:project_code>", methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_project_details_by_project_code(project_code):
 
     try:

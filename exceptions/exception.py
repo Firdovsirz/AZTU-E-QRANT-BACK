@@ -21,7 +21,7 @@ def handle_not_found(e):
     return jsonify({"status" : 404, "message": "User not found", "error_code":  "NOT_FOUND"}), 404
 
 @app.errorhandler(404)
-def handle_specific_not_found(e, message):
+def handle_specific_not_found(e ,message):
     return jsonify({"status": 404, "message" : message, "error_code" : "NOT_FOUND"})
 
 # handle missing_field error

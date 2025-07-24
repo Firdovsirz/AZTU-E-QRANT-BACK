@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/api/profile/<string:fin_kod>', methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_profile(fin_kod):
    try:
        user = User.query.filter_by(fin_kod=fin_kod).first()
@@ -34,7 +34,7 @@ def get_profile(fin_kod):
        return handle_global_exception(str(e))
    
 @user_bp.route('/api/profile/image/<string:fin_kod>', methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_profile_image(fin_kod):
     try:
         user = User.query.filter_by(fin_kod=fin_kod).first()
@@ -45,7 +45,7 @@ def get_profile_image(fin_kod):
         return handle_global_exception(str(e))
     
 @user_bp.route('/api/approve/profile', methods=['POST'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def complete_profile():
     try:
         data = request.form

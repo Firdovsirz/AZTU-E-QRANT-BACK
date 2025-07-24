@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 collaborator_bp = Blueprint('collaborator_bp', __name__)
 
 @collaborator_bp.route("/api/collaborators", methods=['GET'])
-@token_required([0])
+@token_required([0, 2])
 def get_collaborators():
     try:
         logger.debug("Fetching all collaborators")
@@ -39,7 +39,7 @@ def get_collaborators():
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/collaborators/<int:project_code>")
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_collaborators_by_fin_kod(project_code):
     try:
         logger.debug(f"Fetching collaborators for project code: {project_code}")
@@ -84,7 +84,7 @@ def get_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
    
 @collaborator_bp.route("/api/app-wait-collaborators/<int:project_code>", methods=['GET'])
-@token_required([0])
+@token_required([0, 2])
 def get_app_wait_collaborators_by_fin_kod(project_code):
     try:
         logger.debug(f"Fetching collaborators for project code: {project_code}")
@@ -130,7 +130,7 @@ def get_app_wait_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/project/owner/<int:project_code>", methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_project_owner(project_code):
     try:
         logger.debug(f"Fetching project owner for project code: {project_code}")
@@ -156,7 +156,7 @@ def get_project_owner(project_code):
         return handle_global_exception(str(e))
 
 @collaborator_bp.route('/api/be-collaborator', methods=['POST'])
-@token_required([1])
+@token_required([1, 2])
 def be_collaborator():
     try:
         logger.debug("Received request to become collaborator")
@@ -212,7 +212,7 @@ def be_collaborator():
 
     
 @collaborator_bp.route('/api/app-collaborator/<string:fin_kod>', methods=['POST'])
-@token_required([0])
+@token_required([0, 2])
 def approve_collaborator(fin_kod):
     try:
         collaborator = Collaborator.query.filter_by(fin_kod=fin_kod).first()
@@ -223,8 +223,15 @@ def approve_collaborator(fin_kod):
         collaborator.approved = True
         db.session.commit()
 
-        return handle_success("Collaborator approved successfully.")
-    
+        collaborator_data = {
+            "fin_kod": collaborator.fin_kod,
+            "project_code": collaborator.project_code,
+            "approved": collaborator.approved,
+            # add other fields you want to expose
+        }
+
+        return handle_success(collaborator_data, "Collaborator approved successfully.")
+            
     except Exception as e:
         logger.exception("An error occurred while processing approve-collaborator request")
         return handle_global_exception(str(e))

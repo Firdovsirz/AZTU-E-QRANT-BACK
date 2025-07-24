@@ -20,6 +20,7 @@ class Project(db.Model):
     approved = db.Column(db.Integer, default=0)
     collaborator_limit = db.Column(db.Integer, nullable=False)
     max_smeta_amount = db.Column(db.Integer, nullable=False, default=30000)
+    expert = db.Column(db.Text, default=None)
 
     def project_detail(self):
         return {
@@ -39,5 +40,6 @@ class Project(db.Model):
             'project_deadline': self.project_deadline,
             'approved': self.approved,
             'collaborator_limit': self.collaborator_limit,
-            'max_smeta_amount': self.max_smeta_amount
+            'max_smeta_amount': self.max_smeta_amount,
+            'expert': self.expert
         }

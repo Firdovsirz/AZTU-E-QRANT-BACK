@@ -1,3 +1,4 @@
+import traceback
 from models.projectModel import Project
 from models.projectModel import Project
 from utils.jwt_required import token_required
@@ -14,7 +15,7 @@ smeta_bp = Blueprint('smeta_bp', __name__)
 
 # ➕ POST - Create new smeta record
 @smeta_bp.route('/api/create-smeta', methods=['POST'])
-@token_required([0])
+@token_required([0, 2])
 def create_smeta():
     data = request.get_json()
     try:
@@ -34,77 +35,76 @@ def create_smeta():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@smeta_bp.route('/api/update-smeta-field/<int:project_code>', methods=['PATCH'])
+@token_required([0, 2])
+def update_smeta_field(project_code):
+    data = request.get_json()
+    column = data.get('column')
+    value = data.get('value')
 
-@smeta_bp.route("/api/main-smeta/<int:project_code>", methods=['GET'])
-@token_required([0, 1])
-def get_main_smeta_by_project_code(project_code):
+    if not column or value is None:
+        return jsonify({'error': 'Missing column or value'}), 400
+
+    smeta = Smeta.query.filter_by(project_code=str(project_code)).first()
+    if not smeta:
+        return jsonify({'error': 'Smeta not found'}), 404
+
+    if not hasattr(smeta, column):
+        return jsonify({'error': f"Column '{column}' does not exist in Smeta model"}), 400
 
     try:
-
-        project = Project.query.filter_by(project_code=project_code).first()
-
-        if not project:
-             return handle_specific_not_found("Project not found for the project code.")
-        
-        total_salary_smeta = Salary.query.filter_by(project_code=project_code).all()
-
-        total_salary_amount = 0
-
-        for i in total_salary_smeta:
-            total_salary_amount += i.total_salary
+        setattr(smeta, column, value)
+        db.session.commit()
+        return jsonify({'message': f"'{column}' updated successfully", 'data': smeta.serialize()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
-        total_tools_smeta = SubjectOfPurchase.query.filter_by(project_code=project_code).all()
+@smeta_bp.route("/api/main-smeta/<int:project_code>", methods=['GET'])
+@token_required([0, 1, 2])
+def get_main_smeta_by_project_code(project_code):
+    try:
+        project = Project.query.filter_by(project_code=str(project_code)).first()
+        main_smeta = Smeta.query.filter_by(project_code=str(project_code)).first()
 
-        total_tools_amount = 0
+        if not main_smeta or not project:
+            return handle_specific_not_found("Project or Smeta not found")
 
-        for i in total_tools_smeta:
-            total_tools_amount += i.total_amount
+        total_main_amount = sum([
+            main_smeta.total_salary or 0,
+            main_smeta.total_equipment or 0,
+            main_smeta.total_fee or 0,
+            main_smeta.defense_fund or 0,
+            main_smeta.total_services or 0,
+            main_smeta.total_rent or 0,
+            main_smeta.other_expenses or 0
+        ])
 
-        total_services_smeta = ServicesOfPurchase.query.filter_by(project_code=project_code).all()
+        max_amount_error = True if total_main_amount > project.max_smeta_amount else False
 
-        total_services_amount = 0
-
-        for i in total_services_smeta:
-            total_services_amount += i.total_amount
-
-        total_rent_smeta = Rent.query.filter_by(project_code=project_code).all()
-
-        total_rent_amount = 0
-
-        for i in total_rent_smeta:
-
-            total_rent_amount += i.total_amount
-
-        total_other_smeta = other_exp_model.query.filter_by(project_code=project_code).all()
-
-        total_other_amount = 0
-
-        for i in total_other_smeta:
-
-            total_other_amount += i.total_amount
-
-
-        total_main_amount = total_salary_amount + total_tools_amount + total_services_amount + total_rent_amount + total_other_amount
-        if total_main_amount > Project.query.filter_by(project_code=project_code).first().max_smeta_amount:
-            return handle_conflict("Smeta is over ammount")
-        
         main_smeta_data = {
-            "total_salary_smeta": total_salary_amount,
-            "total_tools_smeta": total_tools_amount,
-            "total_services_smeta": total_services_amount,
-            "total_rent_smeta": total_rent_amount,
-            "total_other_smeta": total_other_amount,
-            "total_main_amount": total_main_amount
+            "total_salary_smeta": main_smeta.total_salary,
+            "total_tools_smeta": main_smeta.total_equipment,
+            "total_services_smeta": main_smeta.total_services,
+            "total_rent_smeta": main_smeta.total_rent,
+            "total_other_smeta": main_smeta.other_expenses,
+            "total_tax": main_smeta.total_fee,
+            "total_defense_fund": main_smeta.defense_fund,
+            "total_main_amount": total_main_amount,
+            "max_amount_error": max_amount_error
         }
 
         return handle_success(main_smeta_data, "Smeta fetched successfully.")
     
     except Exception as e:
+        import traceback
+        print("❌ Exception occurred in get_main_smeta_by_project_code:")
+        print(traceback.format_exc())
         return handle_global_exception(str(e))
+    
 
 @smeta_bp.route('/api/edit-smeta/<int:project_code>', methods=['PATCH'])
-@token_required([0])
+@token_required([0, 2])
 def update_smeta(project_code):
     data = request.get_json()
     smeta = Smeta.query.get(project_code)
@@ -124,7 +124,7 @@ def update_smeta(project_code):
 
 
 @smeta_bp.route('/api/delete-smeta/<int:project_code>', methods=['DELETE'])
-@token_required([0])
+@token_required([0, 2])
 def delete_smeta(project_code):
     smeta = Smeta.query.get(project_code)
     if not smeta:

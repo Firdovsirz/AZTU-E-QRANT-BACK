@@ -1,8 +1,9 @@
 import logging
-from utils.jwt_required import token_required
 from models.userModel import User
 from models.projectModel import Project
+from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
+from models.smetaModels.smetaModel import Smeta
 from models.collaboratorModel import Collaborator
 from models.smetaModels.salaryModel import db, Salary
 from exceptions.exception import handle_specific_not_found, handle_global_exception
@@ -14,7 +15,7 @@ salary_bp = Blueprint('salary_bp', __name__)
 
 
 @salary_bp.route('/api/create-salary-table', methods=['POST'])
-@token_required([0])
+@token_required([0, 2])
 def add_salary():
     data = request.get_json()
     logger.debug("Received request data: %s", data)
@@ -50,6 +51,16 @@ def add_salary():
             total_salary=total_salary
         )
 
+        project_code = str(data['project_code'])
+
+        main_smeta = Smeta.query.filter_by(project_code=project_code).first()
+
+        if not main_smeta:
+            main_smeta = Smeta(project_code=project_code)
+            db.session.add(main_smeta)
+
+        main_smeta.total_salary = total_salary
+
         logger.debug("New Salary object: %s", new_salary.salary_details())
         db.session.add(new_salary)
         db.session.commit()
@@ -61,7 +72,7 @@ def add_salary():
 
 
 @salary_bp.route("/api/salary/smeta/<int:project_code>", methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_salary_smeta_by_project_code(project_code):
     logger.debug("Fetching salary smeta for project_code: %s", project_code)
     try:
@@ -108,7 +119,7 @@ def get_salary_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @salary_bp.route('/api/all-salaries-table', methods=['GET'])
-@token_required([0, 1])
+@token_required([0, 1, 2])
 def get_all_salaries():
     salaries = Salary.query.all()
     return jsonify([s.salarytable() for s in salaries]), 200
@@ -116,38 +127,36 @@ def get_all_salaries():
 
 
 @salary_bp.route('/api/edit-salary-table/<int:project_code>', methods=['PATCH'])
-@token_required([0])
+@token_required([0, 2])
 def update_salary(project_code):
     data = request.get_json()
-    
-    salary = Salary.query.filter_by(project_code=project_code).first()
+    fin_kod = data.get('fin_kod')
+    salary_per_month = data.get('salary_per_month')
+    months = data.get('months')
 
+    if not fin_kod:
+        logger.error("Missing required field: fin_kod")
+        return jsonify({'error': 'fin_kod is required'}), 400
+
+    salary = Salary.query.filter_by(project_code=project_code, fin_kod=fin_kod).first()
     if not salary:
         return jsonify({'message': 'Salary record not found'}), 404
 
     try:
-        if 'project_code' in data:
-            salary.project_code = data['project_code']
-        if 'full_name' in data:
-            salary.full_name = data['full_name']
-        if 'project_function' in data:
-            salary.project_function = data['project_function']
-        if 'salary_per_month' in data:
-            salary.salary_per_month = data['salary_per_month']
-        if 'months' in data:
-            salary.months = data['months']
-        if 'total_salary' in data:
-            salary.total_salary = data['total_salary']
+        if salary_per_month is not None:
+            salary.salary_per_month = int(salary_per_month)
+        if months is not None:
+            salary.months = int(months)
+        salary.total_salary = salary.salary_per_month * salary.months
 
         db.session.commit()
-        return jsonify({'message': 'Salary record updated', 'data': salary.salarytable()}), 200
+        return jsonify({'message': 'Salary record updated', 'data': salary.salary_details()}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-
+        logger.exception("Exception during salary update")
+        return jsonify({'error': str(e)}), 500
 
 @salary_bp.route('/api/delete-salary/<int:project_code>', methods=['DELETE'])
-@token_required([0])
+@token_required([0, 2])
 def delete_salary(project_code):
     salary = Salary.query.filter_by(project_code=project_code).first()
 

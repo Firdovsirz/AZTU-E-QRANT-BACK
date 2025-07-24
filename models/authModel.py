@@ -9,8 +9,8 @@ class Auth(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     user_type = db.Column(db.Integer, nullable=False)
     # 0 = teacher, 1 = phd, 2 = master
-    academic_role = db.Column(db.Integer)
-    # 1 = collaborator, 0 = owner
+    # academic_role = db.Column(db.Integer)
+    # 1 = collaborator, 0 = owner, 2 = super admin
     project_role = db.Column(db.Integer)
 
 
@@ -28,6 +28,6 @@ class Auth(db.Model):
         return {
             'fin_kod' : self.fin_kod,
             'user_type': self.user_type,
-            'academic_role': self.academic_role,
+            # 'academic_role': self.academic_role,
             'project_role': self.project_role
         }
