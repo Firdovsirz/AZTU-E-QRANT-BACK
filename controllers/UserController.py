@@ -58,7 +58,7 @@ def complete_profile():
             'citizenship', 'personal_id_number', 'sex', 'work_place', 'department',
             'duty', 'main_education', 'additonal_education', 'scientific_degree',
             'scientific_date', 'scientific_name', 'scientific_name_date',
-            'work_location', 'work_phone', 'work_email'
+            'work_location', 'work_phone', 'work_email', 'born_date'
         ]
 
         for field in required_fields:
@@ -110,6 +110,7 @@ def complete_profile():
         user.work_phone = data.get('work_phone')
         user.work_email = data.get('work_email')
         user.profile_completed = 1
+        user.born_date = data.get('born_date')
 
         db.session.commit()
 

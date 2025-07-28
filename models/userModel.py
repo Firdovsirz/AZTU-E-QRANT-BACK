@@ -32,6 +32,7 @@ class User(db.Model):
     work_phone = db.Column(db.Text, unique=True)
     work_email = db.Column(db.Text, unique=True)
     profile_completed = db.Column(db.Integer, nullable=False)
+    born_date = db.Column(db.DateTime)
 
     def user_details(self):
         return {
@@ -61,7 +62,8 @@ class User(db.Model):
             "work_location": self.work_location,
             "work_phone": self.work_phone,
             "work_email": self.work_email,
-            "profile_completed": self.profile_completed
+            "profile_completed": self.profile_completed,
+            "born_date": self.born_date
         }
     
     def get_user_image(self):

@@ -5,6 +5,8 @@ from models.authModel import Auth
 from models.userModel import User
 from models.projectModel import Project
 from utils.jwt_required import token_required
+from models.smetaModels.smetaModel import Smeta
+from models.collaboratorModel import Collaborator
 from flask import Blueprint, request, current_app
 from models.collaboratorModel import Collaborator
 from models.smetaModels.salaryModel import Salary
@@ -132,33 +134,17 @@ def approve_project():
 @project_offer.route('/api/projects', methods=['GET'])
 @token_required([0, 1, 2])
 def get_projects():
-    # approved_param = request.args.get('approved')
-
-    # if approved_param is None:
-    #     return {'error': 'approved parameter is required (0 or 1).'}, 400
-
-    # try:
-    #     approved = int(approved_param)
-    #     if approved not in [0, 1]:
-    #         raise ValueError
-    # except ValueError:
-    #     return {'error': 'approved must be 0 or 1.'}, 400
-
-    # projects = Project.query.filter_by(approved=approved).all()
-    # return {
-    #     'projects': [serialize_project(p) for p in projects],
-    #     'approved': approved
-    # }, 200
+    current_app.logger.info("GET /api/projects called")
     try:
         project_list = []
         projects = Project.query.all()
 
         if not projects:
+            current_app.logger.warning("No projects found in database")
             return handle_specific_not_found('No project found.')
 
         for project in projects:
             project_data = project.project_detail()
-
             fin_kod = project_data.get('fin_kod')
             user = User.query.filter_by(fin_kod=fin_kod).first()
 
@@ -172,8 +158,10 @@ def get_projects():
 
             project_list.append(project_data)
 
+        current_app.logger.info(f"Returning {len(project_list)} projects")
         return handle_success(project_list, 'Projects fetched successfully.')
     except Exception as e:
+        current_app.logger.error(f"Exception in /api/projects: {e}", exc_info=True)
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<string:fin_kod>")
@@ -324,3 +312,88 @@ def get_project_details_by_project_code(project_code):
     
     except Exception as e:
         return handle_global_exception(str(e))
+
+
+@project_offer.route("/api/submit-project", methods=['POST'])
+@token_required([0, 2])
+def submit_project():
+    data = request.get_json()
+    project_code = data.get('project_code')
+
+    if not project_code:
+        return {'error': 'project_code field is required.'}, 400
+
+    project = Project.query.filter_by(project_code=project_code).first()
+
+    if not project:
+        return {'error': 'Project not found for the provided project_code.'}, 404
+    smeta = Smeta.query.filter_by(project_code=project_code).first()
+
+    total_amount = sum([
+        smeta.total_fee,
+        smeta.total_salary,
+        smeta.defense_fund,
+        smeta.total_equipment,
+        smeta.total_services,
+        smeta.total_rent,
+        smeta.other_expenses
+    ])
+
+    if total_amount > 30000:
+        return {
+            "status": 409,
+            "message": "Total amount is over 30000"
+        }, 409
+
+    project.submitted = True
+    project.submitted_at = datetime.utcnow()
+
+    db.session.commit()
+
+    return {'message': 'Project successfully submitted.'}, 200
+
+@project_offer.route("/api/col-project/<string:fin_kod>")
+@token_required([1])
+def collaborator_projet(fin_kod):
+    collaborator = Collaborator.query.filter_by(fin_kod=fin_kod).first()
+    
+    if not collaborator:
+        return {'error': 'Collaborator not found'}, 404
+    
+    return {
+        'status': 200,
+        'message': "Project code fetched successfully.",
+        'project_code': collaborator.project_code,
+    }, 200
+
+@project_offer.route("/api/project-owner/<int:project_code>")
+def get_project_owner(project_code):
+    project = Project.query.filter_by(project_code=project_code).first()
+    
+    if not project:
+        return {
+            "status": 404,
+            "message": "Project not found."
+        }, 404
+
+    owner_fin_kod = project.fin_kod
+    owner = User.query.filter_by(fin_kod=owner_fin_kod).first()
+
+    if not owner:
+        return {
+            "status": 404,
+            "message": "No user found."
+        }, 404
+    
+    return {
+        "status": 200,
+        "message": "Owner fetched successfully.",
+        "owner_data": {
+            "name": owner.name,
+            "surname": owner.surname,
+            "father_name": owner.father_name,
+            "fin_kod": owner.fin_kod,
+            "project_role": owner.work_location,
+            "image": owner.get_user_image()
+        }
+    }, 200

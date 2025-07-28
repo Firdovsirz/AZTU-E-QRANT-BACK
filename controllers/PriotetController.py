@@ -50,4 +50,13 @@ def get_priotets():
         return handle_success(data, "Priotets fetched successfully")
     except Exception as e:
         return handle_global_exception(e)
+
+@priotet_bp.route('/api/priotet/<int:prioritet_code>')
+def get_priotet_by_code(prioritet_code):
+    try:
+        priotet = Priotet.query.filter_by(prioritet_code=prioritet_code).first().prioritet_name
+
+        return {"priotet_name": priotet}
     
+    except Exception as e:
+        return handle_global_exception(e)

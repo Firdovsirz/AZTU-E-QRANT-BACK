@@ -1,8 +1,9 @@
 from extentions.db import db
-from flask import Blueprint, request
+from utils.email_util import send_email
 from models.expertModel import Expert
 from models.projectModel import Project
 from utils.jwt_required import token_required
+from flask import Blueprint, request, render_template
 from exceptions.exception import handle_missing_field, handle_specific_not_found, handle_success, handle_global_exception, handle_creation
 
 expert_bp = Blueprint('expert', __name__)
@@ -62,9 +63,20 @@ def set_expert():
         project = Project.query.filter_by(project_code=str(data['project_code'])).first()
         print(f"[DEBUG] Project found: {project}")
 
+        if project.submitted == False:
+            return {
+                "status": 409,
+                "message": "Project not submitted."
+            }, 409
+
         project.expert = data['email']
 
-        db.commit()
+        db.session.commit()
+
+        subject = "Ekspert Təyinatı"
+        recipient = data['email']
+        html_content = render_template("set_expert_email.html", project=project)
+        send_email(subject, recipient, html_content)
 
         print("[DEBUG] Expert set successfully.")
         return handle_success("Expert setted successfully.")

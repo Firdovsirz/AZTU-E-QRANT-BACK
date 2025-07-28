@@ -22,6 +22,8 @@ class Project(db.Model):
     max_smeta_amount = db.Column(db.Integer, nullable=False, default=30000)
     expert = db.Column(db.Text, default=None)
     priotet = db.Column(db.Text)
+    submitted = db.Column(db.Boolean, default=False)
+    submitted_at = db.Column(db.DateTime)
 
     def project_detail(self):
         return {
@@ -43,5 +45,7 @@ class Project(db.Model):
             'collaborator_limit': self.collaborator_limit,
             'max_smeta_amount': self.max_smeta_amount,
             'expert': self.expert,
-            'priotet': self.priotet
+            'priotet': self.priotet,
+            'submitted': self.submitted,
+            'submitted_at': self.submitted_at
         }
