@@ -18,7 +18,7 @@ class Project(db.Model):
     project_requirements = db.Column(db.Text)
     project_deadline = db.Column(db.DateTime)
     approved = db.Column(db.Integer, default=0)
-    collaborator_limit = db.Column(db.Integer, nullable=False)
+    collaborator_limit = db.Column(db.Integer, nullable=False, default=7)
     max_smeta_amount = db.Column(db.Integer, nullable=False, default=30000)
     expert = db.Column(db.Text, default=None)
     priotet = db.Column(db.Text)

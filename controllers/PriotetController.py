@@ -3,7 +3,10 @@ from datetime import datetime
 from flask import Blueprint, request
 from models.prioritetModel import Priotet
 from utils.jwt_required import token_required
-from exceptions.exception import handle_missing_field, handle_specific_not_found, handle_success, handle_global_exception, handle_creation
+from exceptions.exception import handle_missing_field, handle_specific_not_found, handle_success, handle_global_exception, handle_creation, handle_not_found
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 priotet_bp = Blueprint('priotet', __name__)
 
@@ -30,7 +33,6 @@ def create_priotet():
 
     except Exception as e:
         return handle_global_exception(e)
-
 
 @priotet_bp.route('/api/priotets', methods=['GET'])
 @token_required([0, 1, 2])
@@ -59,4 +61,43 @@ def get_priotet_by_code(prioritet_code):
         return {"priotet_name": priotet}
     
     except Exception as e:
+        return handle_global_exception(e)
+
+@priotet_bp.route("/api/del-prioritet/<int:code>", methods=['DELETE'])
+def delete_prioritet(code):
+    try:
+        prioritet = Priotet.query.filter_by(prioritet_code=code).first()
+
+        if not prioritet:
+            return handle_not_found(404)
+
+        db.session.delete(prioritet)
+        db.session.commit()
+
+        return {"statusCode": 200, "message": "Prioritet deleted successfully."}, 200
+    
+    except Exception as e:
+        return handle_global_exception(e)
+    
+@priotet_bp.route("/api/upd-prioritet", methods=['POST'])
+def upd_prioritet():
+    try:
+        data = request.get_json()
+
+        prioritet_code = data.get('prioritet_code')
+        new_prioritet_name = data.get('prioritet_name')
+
+        prioritet = Priotet.query.filter_by(prioritet_code=prioritet_code).first()
+
+        if not prioritet:
+            return handle_not_found(404)
+
+        prioritet.prioritet_name = new_prioritet_name
+
+        db.session.commit()
+
+        return {"statusCode": 200, "message": "Prioritet deleted successfully."}, 200
+   
+    except Exception as e:
+        logger.exception("Error occurred while updating prioritet")
         return handle_global_exception(e)

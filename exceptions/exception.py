@@ -28,7 +28,7 @@ def handle_specific_not_found(e ,message):
 
 @app.errorhandler(404)
 def handle_missing_field(e):
-    return({"status": 404, "message": "Missing field", "error_code": "MISSING_FIELD"}), 404
+    return({"status": 400, "message": "Missing field", "error_code": "MISSING_FIELD"}), 400
 
 # handle conflict
 

@@ -24,7 +24,6 @@ def add_salary():
         salary_per_month = data.get('salary_per_month')
         months = data.get('months')
 
-        # Type and null checks with clear logging
         if salary_per_month is None or months is None:
             logger.error("Missing salary_per_month or months. Data: %s", data)
             return jsonify({'error': 'Missing salary_per_month or months'}), 400
@@ -59,13 +58,14 @@ def add_salary():
             main_smeta = Smeta(project_code=project_code)
             db.session.add(main_smeta)
 
-        main_smeta.total_salary = total_salary
+        main_smeta.total_salary = (main_smeta.total_salary or 0) + total_salary
 
         logger.debug("New Salary object: %s", new_salary.salary_details())
         db.session.add(new_salary)
         db.session.commit()
 
-        return jsonify({'message': 'Salary record created', 'data': new_salary.salary_details()}), 201
+        return jsonify({"status": 201, 'message': 'Salary record created', 'data': new_salary.salary_details()}), 201
+    
     except Exception as e:
         logger.exception("Error occurred while creating salary record")
         return jsonify({'error': str(e)}), 400

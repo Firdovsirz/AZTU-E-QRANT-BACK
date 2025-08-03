@@ -1,8 +1,9 @@
-import requests
+import logging
+from datetime import datetime
 from models.authModel import Auth
 from flask_cors import cross_origin
-from flask import Blueprint, request
 from models.userModel import db, User
+from utils.email_util import send_email
 from models.projectModel import  Project
 from utils.jwt_util import encode_auth_token
 from exceptions.exception import handle_creation
@@ -10,11 +11,11 @@ from exceptions.exception import handle_conflict
 from exceptions.exception import handle_not_found
 from models.collaboratorModel import  Collaborator
 from exceptions.exception import handle_unauthorized
+from flask import Blueprint, request, render_template
 from exceptions.exception import handle_missing_field
-from exceptions.exception import handle_signin_success
+from exceptions.exception import handle_signin_success, handle_success
 
 auth_bp = Blueprint('auth', __name__)
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,58 +29,64 @@ def signup():
         required_fields = [
             'fin_kod', 
             'password', 
-            'user_type', 
-            # 'academic_type',
-            'project_role'
+            'user_type',
+            'project_role',
+            'email'
         ]
 
         for field in required_fields:
             if field not in data:
                 logger.warning("Missing field in request data: %s", field)
-                return handle_missing_field(404)
+                return handle_missing_field(400)
 
         fin_kod = data.get('fin_kod')
         password = data.get('password')
         user_type = data.get('user_type')
-        # academic_type = data.get('academic_type')
         project_role = data.get('project_role')
+        email = data.get('email')
+
+        if not all([fin_kod, password, user_type is not None, project_role is not None, email]):
+            logger.warning("One or more required fields are empty")
+            return handle_missing_field(400)
 
         logger.info("Checking if user already exists: fin_kod=%s", fin_kod)
         if Auth.query.filter_by(fin_kod=fin_kod).first() or User.query.filter_by(fin_kod=fin_kod).first():
             logger.warning("User already exists with fin_kod: %s", fin_kod)
             return handle_conflict(409)
-
-        # try:
-
-        #     response = requests.get(f'http://10.2.23.24/telebe-laravel/public/api/get-user/{fin_kod}')
-
-        #     api_response = response.json()
-        #     if "error" in api_response:
-        #         logger.warning("Invalid FIN code according to external API: %s", fin_kod)
-        #         return handle_unauthorized(401, "FIN code is not valid.")
-            
-        # except requests.RequestException as api_error:
-
-        #     logger.exception("Error while verifying FIN code with external API")
-        #     return {"error": "Could not verify FIN code", "message": str(api_error)}, 500
-
+        
+        
         auth_record = Auth(
             fin_kod=fin_kod,
             user_type=user_type,
-            # academic_role=academic_type,
-            project_role=project_role
+            project_role=project_role,
+            approved=False,
+            created_at=datetime.utcnow(),
+            blocked=0
         )
         auth_record.set_password(password)
 
         user_record = User(
             fin_kod=fin_kod,
             profile_completed=0,
+            personal_email=email,
+            work_email=email,
+            created_at=datetime.utcnow()
         )
 
         logger.info("Adding new user and auth records to database")
         db.session.add(auth_record)
         db.session.add(user_record)
         db.session.commit()
+
+        subject = "Qeydiyyat"
+        recipient = email
+
+        if project_role == 1:
+            html_content = render_template("email/coll_registration_template.html", project_role=project_role)
+            send_email(subject, recipient, html_content)
+        elif project_role == 0:
+            html_content = render_template("email/owner_registration_template.html", project_role=project_role)
+            send_email(subject, recipient, html_content)
 
         logger.info("User successfully registered")
         return handle_creation("User registered successfully.")
@@ -95,13 +102,11 @@ def signin():
         fin_kod = data.get('fin_kod')
         password = data.get('password')
         user_type = data.get('user_type')
-        # academic_type = data.get('academic_type')
 
         if not all([
             fin_kod,
             password,
             user_type is not None,
-            # academic_type is not None
         ]):
             logger.warning("Missing required signin fields")
             return handle_missing_field(404)
@@ -109,23 +114,20 @@ def signin():
         logger.info("Attempting signin for FIN: %s", fin_kod)
 
         auth_data = Auth.query.filter_by(fin_kod=fin_kod).first()
+
         if auth_data is None:
             logger.warning("No auth record found for FIN: %s", fin_kod)
             return handle_unauthorized(401, "Invalid FIN code or user not found.")
 
-        if not auth_data.check_password(password):
+        if not auth_data.check_password(password) or not auth_data.approved or auth_data.blocked:
             logger.warning("Incorrect password for FIN: %s", fin_kod)
             return handle_unauthorized(401, "Incorrect password.")
 
         if str(auth_data.user_type) != str(user_type):
             logger.warning("User type mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.user_type, user_type)
             return handle_unauthorized(401, "User type does not match.")
-
-        # if str(auth_data.academic_role) != str(academic_type):
-        #     logger.warning("Academic role mismatch for FIN: %s. Expected %s, got %s", fin_kod, auth_data.academic_role, academic_type)
-        #     return handle_unauthorized(401, "Academic role does not match.")
-
-        is_collaborator = False  # Default value
+        
+        is_collaborator = False
 
         project_role = auth_data.project_role
         project_code = None
@@ -158,6 +160,92 @@ def signin():
         logger.info("User signed in successfully: %s", fin_kod)
         return handle_signin_success(signin_data, "Signed in successfully.", token)
 
+    except Exception as e:
+        logger.exception("Unexpected error during signin")
+        return {"error": "Internal server error", "message": str(e)}, 500
+    
+
+@auth_bp.route("/auth/app-wait-users", methods=['GET'])
+def get_app_wait_users():
+    try:
+        users = Auth.query.filter_by(approved=False).all()
+
+        if not users:
+            return handle_not_found(404)
+        
+        users_data = [
+            {
+                "fin_kod": user.fin_kod,
+                "project_role": user.project_role
+            } for user in users
+        ]
+        
+        return handle_success(users_data, "Users fetched successfully.")
+    
+    except Exception as e:
+        logger.exception("Unexpected error during signin")
+        return {"error": "Internal server error", "message": str(e)}, 500
+    
+
+@auth_bp.route("/auth/app-user/<string:fin_kod>", methods=['POST'])
+def app_user(fin_kod):
+    try:
+        user = Auth.query.filter_by(fin_kod=fin_kod).first()
+
+        if not user:
+            return handle_not_found(404)
+        
+        user.approved=True
+
+        db.session.commit()
+
+        user_email = User.query.filter_by(fin_kod=fin_kod).first().personal_email
+
+        subject = "Qeydiyyat təsdiqi"
+        recipient = user_email
+
+        if user.project_role == 1:
+            html_content = render_template("email/coll_reg_approve_template.html", project_role=user.project_role)
+            send_email(subject, recipient, html_content)
+        elif user.project_role == 0:
+            html_content = render_template("email/owner_reg_approve_template.html", project_role=user.project_role)
+            send_email(subject, recipient, html_content)
+
+        return {"statusCode": 200, "message": "User approved successfully."}, 200
+    
+    except Exception as e:
+        logger.exception("Unexpected error during signin")
+        return {"error": "Internal server error", "message": str(e)}, 500
+    
+@auth_bp.route("/auth/reject-user/<string:fin_kod>", methods=['DELETE'])
+def reject_user(fin_kod):
+    try:
+        auth_user = Auth.query.filter_by(fin_kod=fin_kod).first()
+
+        user = User.query.filter_by(fin_kod=fin_kod).first()
+
+        user_email = user.personal_email
+        project_role=auth_user.project_role
+
+        if not auth_user:
+            return handle_not_found(404)
+        
+        db.session.delete(auth_user)
+        db.session.delete(user)
+        db.session.commit()
+
+        subject = "Uğursuz qeydiyyat"
+        recipient = user_email
+
+        if project_role == 1:
+            html_content = render_template("email/coll_reg_reject_template.html", project_role=project_role)
+            send_email(subject, recipient, html_content)
+        elif project_role == 0:
+            html_content = render_template("email/owner_reg_reject_template.html", project_role=project_role)
+            send_email(subject, recipient, html_content)
+
+        return {"statusCode": 200, "message": "User rejected successfully."}, 200
+    
     except Exception as e:
         logger.exception("Unexpected error during signin")
         return {"error": "Internal server error", "message": str(e)}, 500

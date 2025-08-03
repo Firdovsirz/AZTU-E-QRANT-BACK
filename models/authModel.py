@@ -12,6 +12,12 @@ class Auth(db.Model):
     # academic_role = db.Column(db.Integer)
     # 1 = collaborator, 0 = owner, 2 = super admin
     project_role = db.Column(db.Integer)
+    approved = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+    approved_at = db.Column(db.DateTime)
+    blocked = db.Column(db.Integer, nullable=False, default=0)
+    blocked_at = db.Column(db.DateTime)
+    unblocked_at = db.Column(db.DateTime)
 
 
     def set_password(self, password):
