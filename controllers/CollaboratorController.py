@@ -2,6 +2,7 @@ import logging
 from extentions.db import db
 from models.userModel import User
 from models.authModel import Auth
+from config.limiter import limiter
 from flask_cors import cross_origin
 from utils.email_util import send_email
 from models.projectModel import Project
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 collaborator_bp = Blueprint('collaborator_bp', __name__)
 
 @collaborator_bp.route("/api/collaborators", methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def get_collaborators():
     try:
@@ -40,6 +42,7 @@ def get_collaborators():
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/collaborators/<int:project_code>")
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def get_collaborators_by_fin_kod(project_code):
     try:
@@ -85,6 +88,7 @@ def get_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
    
 @collaborator_bp.route("/api/app-wait-collaborators/<int:project_code>", methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def get_app_wait_collaborators_by_fin_kod(project_code):
     try:
@@ -131,6 +135,7 @@ def get_app_wait_collaborators_by_fin_kod(project_code):
         return handle_global_exception(str(e))
 
 @collaborator_bp.route("/api/project/owner/<int:project_code>", methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def get_project_owner(project_code):
     try:
@@ -157,6 +162,7 @@ def get_project_owner(project_code):
         return handle_global_exception(str(e))
 
 @collaborator_bp.route('/api/be-collaborator', methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([1, 2])
 def be_collaborator():
     try:
@@ -213,6 +219,7 @@ def be_collaborator():
 
     
 @collaborator_bp.route('/api/app-collaborator/<string:fin_kod>', methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def approve_collaborator(fin_kod):
     try:
@@ -246,6 +253,7 @@ def approve_collaborator(fin_kod):
         return handle_global_exception(str(e))
     
 @collaborator_bp.route('/api/reject-collaborator/<string:fin_kod>', methods=['DELETE'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def reject_collaborator(fin_kod):
     try:

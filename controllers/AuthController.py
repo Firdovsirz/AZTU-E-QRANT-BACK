@@ -1,6 +1,7 @@
-import logging
+import logging   
 from datetime import datetime
 from models.authModel import Auth
+from config.limiter import limiter
 from flask_cors import cross_origin
 from models.userModel import db, User
 from utils.email_util import send_email
@@ -21,6 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @auth_bp.route('/auth/signup', methods=['POST'])
+@limiter.limit("50 per second")
 def signup():
     try:
         data = request.get_json()
@@ -96,6 +98,7 @@ def signup():
         return {"error": "Internal server error", "message": str(e)}, 500
 
 @auth_bp.route('/auth/signin', methods=['POST'])
+@limiter.limit("50 per second")
 def signin():
     try:
         data = request.get_json()
@@ -166,6 +169,7 @@ def signin():
     
 
 @auth_bp.route("/auth/app-wait-users", methods=['GET'])
+@limiter.limit("50 per second")
 def get_app_wait_users():
     try:
         users = Auth.query.filter_by(approved=False).all()
@@ -188,6 +192,7 @@ def get_app_wait_users():
     
 
 @auth_bp.route("/auth/app-user/<string:fin_kod>", methods=['POST'])
+@limiter.limit("50 per second")
 def app_user(fin_kod):
     try:
         user = Auth.query.filter_by(fin_kod=fin_kod).first()
@@ -218,6 +223,7 @@ def app_user(fin_kod):
         return {"error": "Internal server error", "message": str(e)}, 500
     
 @auth_bp.route("/auth/reject-user/<string:fin_kod>", methods=['DELETE'])
+@limiter.limit("50 per second")
 def reject_user(fin_kod):
     try:
         auth_user = Auth.query.filter_by(fin_kod=fin_kod).first()

@@ -1,5 +1,6 @@
 import logging
 from models.userModel import User
+from config.limiter import limiter
 from models.projectModel import Project
 from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
@@ -15,6 +16,7 @@ salary_bp = Blueprint('salary_bp', __name__)
 
 
 @salary_bp.route('/api/create-salary-table', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def add_salary():
     data = request.get_json()
@@ -72,6 +74,7 @@ def add_salary():
 
 
 @salary_bp.route("/api/salary/smeta/<int:project_code>", methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_salary_smeta_by_project_code(project_code):
     logger.debug("Fetching salary smeta for project_code: %s", project_code)
@@ -119,6 +122,7 @@ def get_salary_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @salary_bp.route('/api/all-salaries-table', methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_all_salaries():
     salaries = Salary.query.all()
@@ -127,6 +131,7 @@ def get_all_salaries():
 
 
 @salary_bp.route('/api/edit-salary-table/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_salary(project_code):
     data = request.get_json()
@@ -156,6 +161,7 @@ def update_salary(project_code):
         return jsonify({'error': str(e)}), 500
 
 @salary_bp.route('/api/delete-salary/<int:project_code>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_salary(project_code):
     salary = Salary.query.filter_by(project_code=project_code).first()

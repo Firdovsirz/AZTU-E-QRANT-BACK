@@ -1,4 +1,5 @@
 import traceback
+from config.limiter import limiter
 from models.projectModel import Project
 from models.projectModel import Project
 from utils.jwt_required import token_required
@@ -15,6 +16,7 @@ smeta_bp = Blueprint('smeta_bp', __name__)
 
 # ➕ POST - Create new smeta record
 @smeta_bp.route('/api/create-smeta', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def create_smeta():
     data = request.get_json()
@@ -36,6 +38,7 @@ def create_smeta():
         return jsonify({'error': str(e)}), 400
 
 @smeta_bp.route('/api/update-smeta-field/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_smeta_field(project_code):
     data = request.get_json()
@@ -61,6 +64,7 @@ def update_smeta_field(project_code):
 
 
 @smeta_bp.route("/api/main-smeta/<int:project_code>", methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_main_smeta_by_project_code(project_code):
     try:
@@ -104,6 +108,7 @@ def get_main_smeta_by_project_code(project_code):
     
 
 @smeta_bp.route('/api/edit-smeta/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_smeta(project_code):
     data = request.get_json()
@@ -124,6 +129,7 @@ def update_smeta(project_code):
 
 
 @smeta_bp.route('/api/delete-smeta/<int:project_code>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_smeta(project_code):
     smeta = Smeta.query.get(project_code)

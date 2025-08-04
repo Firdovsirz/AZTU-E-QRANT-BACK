@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from config.limiter import limiter
 from flask import Blueprint, request, jsonify
 from utils.jwt_required import token_required
 from models.smetaModels.smetaModel import Smeta
@@ -12,6 +13,7 @@ other_exp = Blueprint('other_exp', __name__)
 
 
 @other_exp.route('/api/other_exp', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def create_other_exp():
     data = request.get_json()
@@ -49,12 +51,14 @@ def create_other_exp():
 
 
 @other_exp.route('/api/get-other_exp-all-tables/<int:project_code>', methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_all_other_exps(project_code):
     other_exps = other_exp_model.query.filter_by(project_code=project_code).all()
     return jsonify([r.others() for r in other_exps]), 200
 
 @other_exp.route('/api/edit-other_exp-table/<int:id>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_other_exp(id):
     try:
@@ -100,6 +104,7 @@ def update_other_exp(id):
 
 
 @other_exp.route('/api/delete-other_exp-table/<int:project_code>/<int:id>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_other_exp(project_code, id):
     try:

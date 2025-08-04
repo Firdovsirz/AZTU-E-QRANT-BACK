@@ -1,4 +1,5 @@
 from extentions.db import db
+from config.limiter import limiter
 from utils.email_util import send_email
 from models.expertModel import Expert
 from models.projectModel import Project
@@ -10,6 +11,7 @@ expert_bp = Blueprint('expert', __name__)
 
 
 @expert_bp.route("/api/create-expert", methods=['POST'])
+@limiter.limit("10 per second")
 @token_required([2])
 def create_expert():
     try:
@@ -45,6 +47,7 @@ def create_expert():
         return handle_global_exception(e)
     
 @expert_bp.route("/api/set-expert", methods=['POST'])
+@limiter.limit("10 per second")
 @token_required([2])
 def set_expert():
     try:
@@ -86,6 +89,7 @@ def set_expert():
         return handle_global_exception(e)
     
 @expert_bp.route("/api/experts", methods=['GET'])
+@limiter.limit("10 per second")
 @token_required([2])
 def get_experts():
     try:

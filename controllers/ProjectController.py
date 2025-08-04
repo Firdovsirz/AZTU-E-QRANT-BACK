@@ -3,6 +3,7 @@ from extentions.db import db
 from datetime import datetime
 from models.authModel import Auth
 from models.userModel import User
+from config.limiter import limiter
 from models.projectModel import Project
 from utils.jwt_required import token_required
 from models.smetaModels.smetaModel import Smeta
@@ -22,6 +23,7 @@ def generate_unique_project_code():
 
 
 @project_offer.route('/api/save/project', methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def save_project():
     current_app.logger.info("POST /api/save/project called")
@@ -99,6 +101,7 @@ def serialize_project(project):
     }
 
 @project_offer.route("/api/approve_project", methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def approve_project():
     try:
@@ -132,6 +135,7 @@ def approve_project():
         
 
 @project_offer.route('/api/projects', methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def get_projects():
     current_app.logger.info("GET /api/projects called")
@@ -165,6 +169,7 @@ def get_projects():
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<string:fin_kod>")
+@limiter.limit("100 per second")
 @token_required([0 ,1, 2])
 def get_project_by_fin_kod(fin_kod):
     try:
@@ -180,6 +185,7 @@ def get_project_by_fin_kod(fin_kod):
         return handle_global_exception(str(e))
     
 @project_offer.route("/api/project/<int:project_code>", methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def project_by_project_code(project_code):
 
@@ -196,6 +202,7 @@ def project_by_project_code(project_code):
         return handle_global_exception(str(e))
 
 @project_offer.route('/api/upd/project', methods=['PATCH'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def update_project_offer():
     data = request.get_json()
@@ -233,6 +240,7 @@ def update_project_offer():
 
 
 @project_offer.route('/api/delete/project', methods=['DELETE'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def delete_project_offer():
     data = request.get_json()
@@ -256,6 +264,7 @@ def delete_project_offer():
     return {'message': 'Project successfully deleted.'}, 200
 
 @project_offer.route("/api/project-details/<int:project_code>", methods=['GET'])
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def get_project_details_by_project_code(project_code):
 
@@ -315,6 +324,7 @@ def get_project_details_by_project_code(project_code):
 
 
 @project_offer.route("/api/submit-project", methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([0, 2])
 def submit_project():
     data = request.get_json()
@@ -353,6 +363,7 @@ def submit_project():
     return {'message': 'Project successfully submitted.'}, 200
 
 @project_offer.route("/api/col-project/<string:fin_kod>")
+@limiter.limit("100 per second")
 @token_required([1])
 def collaborator_projet(fin_kod):
     collaborator = Collaborator.query.filter_by(fin_kod=fin_kod).first()
@@ -367,6 +378,7 @@ def collaborator_projet(fin_kod):
     }, 200
 
 @project_offer.route("/api/project-owner/<int:project_code>")
+@limiter.limit("100 per second")
 def get_project_owner(project_code):
     project = Project.query.filter_by(project_code=project_code).first()
     

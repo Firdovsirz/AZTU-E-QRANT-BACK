@@ -1,3 +1,4 @@
+from config.limiter import limiter
 from extentions.db import db
 from datetime import datetime
 from flask import Blueprint, request
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 priotet_bp = Blueprint('priotet', __name__)
 
 @priotet_bp.route('/api/create-priotet', methods=['POST'])
+@limiter.limit("10 per second")
 @token_required([0, 1, 2])
 def create_priotet():
     try:
@@ -35,6 +37,7 @@ def create_priotet():
         return handle_global_exception(e)
 
 @priotet_bp.route('/api/priotets', methods=['GET'])
+@limiter.limit("10 per second")
 @token_required([0, 1, 2])
 def get_priotets():
     try:
@@ -64,6 +67,7 @@ def get_priotet_by_code(prioritet_code):
         return handle_global_exception(e)
 
 @priotet_bp.route("/api/del-prioritet/<int:code>", methods=['DELETE'])
+@limiter.limit("10 per second")
 def delete_prioritet(code):
     try:
         prioritet = Priotet.query.filter_by(prioritet_code=code).first()
@@ -80,6 +84,7 @@ def delete_prioritet(code):
         return handle_global_exception(e)
     
 @priotet_bp.route("/api/upd-prioritet", methods=['POST'])
+@limiter.limit("10 per second")
 def upd_prioritet():
     try:
         data = request.get_json()

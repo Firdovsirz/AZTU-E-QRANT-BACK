@@ -1,20 +1,13 @@
-import base64
 import logging
-from io import BytesIO
 from extentions.db import db
 from datetime import datetime
 from models.userModel import User
-from flask_cors import cross_origin
+from config.limiter import limiter
 from flask import Blueprint, request
-from utils.jwt_util import encode_auth_token
 from utils.jwt_required import token_required
 from exceptions.exception import handle_success
-from exceptions.exception import handle_creation
-from exceptions.exception import handle_conflict
 from exceptions.exception import handle_not_found
-from exceptions.exception import handle_unauthorized
 from exceptions.exception import handle_missing_field
-from exceptions.exception import handle_signin_success
 from exceptions.exception import handle_global_exception
 
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +16,7 @@ logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/api/profile/<string:fin_kod>', methods=['GET'])
+@limiter.limit("10 per second")
 @token_required([0, 1, 2])
 def get_profile(fin_kod):
    try:
@@ -34,6 +28,7 @@ def get_profile(fin_kod):
        return handle_global_exception(str(e))
    
 @user_bp.route('/api/profile/image/<string:fin_kod>', methods=['GET'])
+@limiter.limit("10 per second")
 @token_required([0, 1, 2])
 def get_profile_image(fin_kod):
     try:
@@ -45,6 +40,7 @@ def get_profile_image(fin_kod):
         return handle_global_exception(str(e))
     
 @user_bp.route('/api/approve/profile', methods=['POST'])
+@limiter.limit("100 per second")
 @token_required([0, 1, 2])
 def complete_profile():
     try:

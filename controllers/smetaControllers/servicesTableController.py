@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from config.limiter import limiter
 from models.projectModel import Project  
 from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 services_bp = Blueprint('services_bp', __name__)
 
 @services_bp.route('/api/add-services', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def add_subject():
     data = request.get_json()
@@ -58,6 +60,7 @@ def add_subject():
 
 
 @services_bp.route('/api/get-services/<int:project_code>', methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_subjects(project_code):
     try:
@@ -82,6 +85,7 @@ def get_subjects(project_code):
 import logging
 
 @services_bp.route('/api/update-services/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_service(project_code):
     try:
@@ -152,6 +156,7 @@ def update_service(project_code):
 
     
 @services_bp.route('/api/delete-services/<int:project_code>/<int:id>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_subject(project_code, id):
 

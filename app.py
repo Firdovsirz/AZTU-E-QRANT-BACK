@@ -2,7 +2,8 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
-from config.config import Config 
+from config.config import Config
+from config.limiter import limiter
 from extentions.db import migrate, db
 from controllers.AuthController import auth_bp
 from controllers.UserController import user_bp
@@ -20,11 +21,14 @@ from controllers.smetaControllers.servicesTableController import services_bp
 def main_app():
     load_dotenv()
     app = Flask(__name__)
+    limiter.init_app(app)
     app.config.from_object(Config)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False').lower() == 'true'
 
+    
+    
     CORS(
     	app,
     	# origins=["http://e-grant.aztu.edu.az", "http://10.0.26.35"],

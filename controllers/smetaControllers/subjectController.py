@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from config.limiter import limiter
 from models.projectModel import Project
 from utils.jwt_required import token_required
 from flask import Blueprint, request, jsonify
@@ -13,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 subject_bp = Blueprint('subject_bp', __name__)
 
 @subject_bp.route('/api/add-subject', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def add_subject():
     data = request.get_json()
@@ -59,6 +61,7 @@ def add_subject():
         return jsonify({'error': str(e)}), 400
 
 @subject_bp.route("/api/subject/smeta/<int:project_code>", methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_subject_smeta_by_project_code(project_code):
     try:
@@ -70,6 +73,7 @@ def get_subject_smeta_by_project_code(project_code):
         return handle_global_exception(str(e))
     
 @subject_bp.route('/api/update-subject/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_subject(project_code):
     data = request.get_json()
@@ -125,6 +129,7 @@ def update_subject(project_code):
 
 
 @subject_bp.route('/api/delete/smeta/subject/<int:project_code>/<int:id>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_subject(project_code, id):
     try:

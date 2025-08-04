@@ -1,4 +1,5 @@
 from decimal import Decimal
+from config.limiter import limiter
 from flask import Blueprint, request, jsonify
 from utils.jwt_required import token_required
 from models.smetaModels.smetaModel import Smeta
@@ -8,6 +9,7 @@ rent_bp = Blueprint('rent_bp', __name__)
 
 
 @rent_bp.route('/api/rent', methods=['POST'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def create_rent():
     data = request.get_json()
@@ -47,12 +49,14 @@ def create_rent():
         return jsonify({'error': str(e)}), 500
 
 @rent_bp.route('/api/get-rent-all-tables/<int:project_code>', methods=['GET'])
+@limiter.limit("50 per second")
 @token_required([0, 1, 2])
 def get_all_rents(project_code):
     rents = Rent.query.filter_by(project_code=project_code).all()
     return jsonify([r.rent() for r in rents]), 200
 
 @rent_bp.route('/api/edit-rent-table/<int:project_code>', methods=['PATCH'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def update_rent(project_code):
     try:
@@ -109,6 +113,7 @@ def update_rent(project_code):
 
 
 @rent_bp.route('/api/delete-rent-table/<int:project_code>/<int:id>', methods=['DELETE'])
+@limiter.limit("50 per second")
 @token_required([0, 2])
 def delete_rent(project_code, id):
 
